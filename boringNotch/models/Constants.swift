@@ -177,6 +177,13 @@ extension Defaults.Keys {
     static let showFullEventTitles = Key<Bool>("showFullEventTitles", default: false)
     static let autoScrollToNextEvent = Key<Bool>("autoScrollToNextEvent", default: true)
     
+    // MARK: AI Usage
+    static let showClaudeUsage = Key<Bool>("showClaudeUsage", default: false)
+    static let showChatGPTUsage = Key<Bool>("showChatGPTUsage", default: false)
+    static let aiUsageRefreshInterval = Key<Double>("aiUsageRefreshInterval", default: 300)
+    static let aiUsageWarnThreshold = Key<Double>("aiUsageWarnThreshold", default: 80)
+    static let showAIUsageWarnings = Key<Bool>("showAIUsageWarnings", default: true)
+
     // MARK: Fullscreen Media Detection
     static let hideNotchOption = Key<HideNotchOption>("hideNotchOption", default: .nowPlayingOnly)
     

@@ -241,6 +241,24 @@ final class XPCHelperClient: NSObject {
             return false
         }
     }
+
+    // MARK: - AI Usage
+
+    /// Returns the helper's JSON envelope, or an error code when the fetch failed.
+    nonisolated func fetchAIUsage(service name: String) async -> (data: Data?, error: String?) {
+        do {
+            let service = await MainActor.run {
+                ensureRemoteService()
+            }
+            return try await service.withContinuation { service, continuation in
+                service.fetchAIUsage(name) { data, error in
+                    continuation.resume(returning: (data, error))
+                }
+            }
+        } catch {
+            return (nil, "helperUnavailable")
+        }
+    }
 }
 
 extension Notification.Name {

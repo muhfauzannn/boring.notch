@@ -45,6 +45,9 @@ struct SettingsView: View {
                 NavigationLink(value: "Battery") {
                     Label("Battery", systemImage: "battery.100.bolt")
                 }
+                NavigationLink(value: "AIUsage") {
+                    Label("AI Usage", systemImage: "sparkles")
+                }
 //                NavigationLink(value: "Downloads") {
 //                    Label("Downloads", systemImage: "square.and.arrow.down")
 //                }
@@ -83,6 +86,8 @@ struct SettingsView: View {
                     HUD()
                 case "Battery":
                     Charge()
+                case "AIUsage":
+                    AIUsageSettings()
                 case "Shelf":
                     Shelf()
                 case "Shortcuts":
@@ -379,6 +384,74 @@ struct Charge: View {
         }
         .accentColor(.effectiveAccent)
         .navigationTitle("Battery")
+    }
+}
+
+struct AIUsageSettings: View {
+    @ObservedObject var usageManager = AIUsageManager.shared
+    @Default(.aiUsageWarnThreshold) var warnThreshold
+    @Default(.aiUsageRefreshInterval) var refreshInterval
+
+    var body: some View {
+        Form {
+            Section {
+                Defaults.Toggle(key: .showClaudeUsage) {
+                    serviceLabel(.claude, source: "Uses your Claude Code sign-in")
+                }
+                Defaults.Toggle(key: .showChatGPTUsage) {
+                    serviceLabel(.chatgpt, source: "Uses your Codex CLI sign-in")
+                }
+            } header: {
+                Text("Services")
+            } footer: {
+                Text("Numbers come from the same unofficial endpoints the Claude Code and Codex CLIs use, so they can change or stop working without notice. boring.notch only reads your existing sign-in and never stores or refreshes it. macOS may ask once to allow access to the Claude Code Keychain item.")
+            }
+            Section {
+                Picker("Refresh every", selection: $refreshInterval) {
+                    Text("1 minute").tag(60.0)
+                    Text("5 minutes").tag(300.0)
+                    Text("15 minutes").tag(900.0)
+                    Text("30 minutes").tag(1800.0)
+                }
+                Defaults.Toggle(key: .showAIUsageWarnings) {
+                    Text("Show warning in closed notch")
+                }
+                Slider(value: $warnThreshold, in: 50...95, step: 5) {
+                    Text("Warn when a limit passes \(Int(warnThreshold))%")
+                }
+                Button("Refresh now") {
+                    Task { await usageManager.refresh() }
+                }
+                .disabled(!usageManager.isEnabled)
+            } header: {
+                Text("Behavior")
+            }
+        }
+        .accentColor(.effectiveAccent)
+        .navigationTitle("AI Usage")
+    }
+
+    private func serviceLabel(_ service: AIService, source: String) -> some View {
+        HStack(spacing: 8) {
+            AIServiceLogo(service: service, size: 16, color: .primary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Show \(service.displayName) usage")
+                Text(status(for: service, fallback: source))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func status(for service: AIService, fallback: String) -> String {
+        switch usageManager.state(for: service) {
+        case .loaded(let snapshot):
+            return "\(fallback) · Connected" + (snapshot.plan.map { ", \($0)" } ?? "")
+        case .failed(let message):
+            return message
+        case .idle, .loading:
+            return fallback
+        }
     }
 }
 
