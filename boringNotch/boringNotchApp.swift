@@ -281,6 +281,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
 
+        // Start AI usage polling so closed-notch warnings work before the Usage tab is opened
+        Task { @MainActor in
+            _ = AIUsageManager.shared
+        }
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(screenConfigurationDidChange),
