@@ -27,6 +27,7 @@ class CalendarManager: ObservableObject {
     private let calendarService = CalendarService()
 
     private var eventStoreChangedObserver: NSObjectProtocol?
+    private var eventsFetchToken: UInt = 0
 
     private init() {
         self.currentWeekStartDate = CalendarManager.startOfDay(Date())
@@ -50,6 +51,7 @@ class CalendarManager: ObservableObject {
         ) { [weak self] _ in
             Task {
                 await self?.reloadCalendarAndReminderLists()
+                await self?.updateEvents()
             }
         }
     }
@@ -79,20 +81,14 @@ class CalendarManager: ObservableObject {
             self.calendarAuthorizationStatus = granted ? .fullAccess : .denied
             if granted {
                 await reloadCalendarAndReminderLists()
-                events = await calendarService.events(
-                    from: currentWeekStartDate,
-                    to: Calendar.current.date(byAdding: .day, value: 1, to: currentWeekStartDate)!,
-                    calendars: selectedCalendars.map { $0.id })
+                await updateEvents()
             }
         case .restricted, .denied:
             NSLog("Calendar access denied or restricted")
         case .fullAccess:
             NSLog("Full access")
             await reloadCalendarAndReminderLists()
-            events = await calendarService.events(
-                from: currentWeekStartDate,
-                to: Calendar.current.date(byAdding: .day, value: 1, to: currentWeekStartDate)!,
-                calendars: selectedCalendars.map { $0.id })
+            await updateEvents()
         case .writeOnly:
             NSLog("Write only")
         @unknown default:
@@ -184,21 +180,25 @@ class CalendarManager: ObservableObject {
     }
 
     private func updateEvents() async {
+        // Each fetch gets a token. Fetches can overlap while the user scrolls through dates and
+        // the reminders query completes on its own schedule, so an older request may finish after
+        // a newer one. Only the latest request is allowed to publish its results.
+        eventsFetchToken &+= 1
+        let token = eventsFetchToken
+        let start = currentWeekStartDate
         let calendarIDs = selectedCalendars.map { $0.id }
         let eventsResult = await calendarService.events(
-            from: currentWeekStartDate,
-            to: Calendar.current.date(byAdding: .day, value: 1, to: currentWeekStartDate)!,
+            from: start,
+            to: Calendar.current.date(byAdding: .day, value: 1, to: start)!,
             calendars: calendarIDs
         )
+        guard token == eventsFetchToken, start == currentWeekStartDate else { return }
         self.events = eventsResult
     }
     
     func setReminderCompleted(reminderID: String, completed: Bool) async {
         await calendarService.setReminderCompleted(reminderID: reminderID, completed: completed)
         // Refresh events after updating
-        events = await calendarService.events(
-            from: currentWeekStartDate,
-            to: Calendar.current.date(byAdding: .day, value: 1, to: currentWeekStartDate)!,
-            calendars: selectedCalendars.map { $0.id })
+        await updateEvents()
     }
 }

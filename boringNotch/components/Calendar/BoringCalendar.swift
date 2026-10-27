@@ -23,7 +23,6 @@ struct WheelPicker: View {
     @Binding var selectedDate: Date
     @State private var scrollPosition: Int?
     @State private var haptics: Bool = false
-    @State private var byClick: Bool = false
     let config: Config
 
     var body: some View {
@@ -43,7 +42,6 @@ struct WheelPicker: View {
                         let isSelected = Calendar.current.isDate(date, inSameDayAs: selectedDate)
                         dateButton(date: date, isSelected: isSelected, id: index) {
                             selectedDate = date
-                            byClick = true
                             withAnimation {
                                 scrollPosition = index
                             }
@@ -62,12 +60,12 @@ struct WheelPicker: View {
         .scrollTargetBehavior(.viewAligned)  // Ensures scroll view snaps the centered view
         .safeAreaPadding(.horizontal)
         .sensoryFeedback(.alignment, trigger: haptics)
-        .onChange(of: scrollPosition) { oldValue, newValue in
-            if !byClick {
-                handleScrollChange(newValue: newValue, config: config)
-            } else {
-                byClick = false
-            }
+        // handleScrollChange is a no-op when the centered date already matches selectedDate, so
+        // programmatic scrolls (clicks, reopen) need no special flag. A "skip next change" flag
+        // used to get stuck when a click didn't actually move the wheel (e.g. tapping the centered
+        // date), which made the next swipe ignored and left the agenda on the old date.
+        .onChange(of: scrollPosition) { _, newValue in
+            handleScrollChange(newValue: newValue, config: config)
         }
         .onAppear {
             scrollToToday(config: config)
@@ -76,7 +74,6 @@ struct WheelPicker: View {
         .onChange(of: selectedDate) { _, newValue in
             let targetIndex = indexForDate(newValue)
             if scrollPosition != targetIndex {
-                byClick = true
                 withAnimation {
                     scrollPosition = targetIndex
                 }
@@ -140,9 +137,8 @@ struct WheelPicker: View {
 
     private func scrollToToday(config: Config) {
         let today = Date()
-        byClick = true
-        scrollPosition = indexForDate(today)
         selectedDate = today
+        scrollPosition = indexForDate(today)
     }
 
     // MARK: - Index/Date mapping with steps and spacers
@@ -225,22 +221,18 @@ struct CalendarView: View {
         }
         .listRowBackground(Color.clear)
         .frame(height: 120)
-        .onChange(of: selectedDate) {
-            Task {
-                await calendarManager.updateCurrentDate(selectedDate)
-            }
+        // Fetch events for the selected day. `.task(id:)` cancels the previous fetch when the
+        // date changes, and CalendarManager drops any stale result that still completes late.
+        .task(id: Calendar.current.startOfDay(for: selectedDate)) {
+            await calendarManager.updateCurrentDate(selectedDate)
         }
         .onChange(of: vm.notchState) { _, _ in
-            Task {
-                await calendarManager.updateCurrentDate(Date.now)
-                selectedDate = Date.now
-            }
+            // Resetting selectedDate triggers the fetch above; no separate fetch for "now" that
+            // could race with it.
+            selectedDate = Date.now
         }
         .onAppear {
-            Task {
-                await calendarManager.updateCurrentDate(Date.now)
-                selectedDate = Date.now
-            }
+            selectedDate = Date.now
         }
     }
 }
