@@ -375,6 +375,8 @@ struct ContentView: View {
                         ShelfView()
                     case .usage:
                         NotchUsageView()
+                    case .lyrics:
+                        NotchLyricsView()
                     }
                 }
                 .transition(

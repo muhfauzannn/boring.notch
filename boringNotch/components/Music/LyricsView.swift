@@ -8,27 +8,76 @@
 import Defaults
 import SwiftUI
 
-// MARK: - Open notch panel
+// MARK: - Lyrics tab
+
+/// The Lyrics tab: a compact now-playing column next to the synced lyrics,
+/// so the Home tab keeps its player, calendar and camera untouched.
+struct NotchLyricsView: View {
+    @ObservedObject private var musicManager = MusicManager.shared
+    @Default(.playerColorTinting) private var playerColorTinting
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 18) {
+            VStack(alignment: .leading, spacing: 4) {
+                Button {
+                    musicManager.openMusicApp()
+                } label: {
+                    Image(nsImage: musicManager.albumArt)
+                        .resizable()
+                        .aspectRatio(1, contentMode: .fill)
+                        .frame(width: 52, height: 52)
+                        .clipShape(RoundedRectangle(cornerRadius: MusicPlayerImageSizes.cornerRadiusInset.opened))
+                        .scaleEffect(musicManager.isPlaying ? 1 : 0.9)
+                        .animation(.smooth, value: musicManager.isPlaying)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.bottom, 2)
+
+                Text(musicManager.songTitle)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                Text(musicManager.artistName)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(
+                        playerColorTinting
+                            ? Color(nsColor: musicManager.avgColor).ensureMinimumBrightness(factor: 0.6)
+                            : .gray
+                    )
+                    .lineLimit(1)
+
+                HStack(spacing: 0) {
+                    HoverButton(icon: "backward.fill", scale: .small) {
+                        musicManager.previousTrack()
+                    }
+                    HoverButton(icon: musicManager.isPlaying ? "pause.fill" : "play.fill", scale: .small) {
+                        musicManager.togglePlay()
+                    }
+                    HoverButton(icon: "forward.fill", scale: .small) {
+                        musicManager.nextTrack()
+                    }
+                }
+                .padding(.leading, -6)
+            }
+            .frame(width: 130, alignment: .leading)
+
+            LyricsPanelView()
+                .frame(maxWidth: .infinity)
+        }
+        .padding(.top, 2)
+        // Fixed like the calendar box, so the tab never grows into the header or past the notch's rounded bottom
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(height: 130, alignment: .top)
+    }
+}
+
+// MARK: - Lyrics panel
 
 struct LyricsPanelView: View {
     @ObservedObject private var musicManager = MusicManager.shared
-    @Default(.lightingEffect) private var lightingEffect
 
     var body: some View {
         ZStack {
-            if lightingEffect {
-                // A gradient rather than a blurred circle, so the glow never spills outside the panel
-                RadialGradient(
-                    colors: [Color(nsColor: musicManager.avgColor).opacity(0.22), .clear],
-                    center: .leading,
-                    startRadius: 0,
-                    endRadius: 180
-                )
-                .opacity(musicManager.isPlaying ? 1 : 0.35)
-                    .allowsHitTesting(false)
-                    .animation(.easeInOut(duration: 0.9), value: musicManager.isPlaying)
-            }
-
             content
                 .id(musicManager.lyricsTrackKey + (musicManager.isFetchingLyrics ? "-loading" : ""))
                 .transition(.blurReplace)
@@ -363,17 +412,15 @@ struct ClosedLyricsStrip: View {
 
 // MARK: - Toolbar button
 
+/// Jumps to the Lyrics tab (turning it on if needed).
 struct LyricsToggleButton: View {
     @Default(.showLyricsPanel) private var showLyricsPanel
 
     var body: some View {
-        HoverButton(
-            icon: showLyricsPanel ? "quote.bubble.fill" : "quote.bubble",
-            iconColor: showLyricsPanel ? .white : .primary,
-            scale: .medium
-        ) {
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.8)) {
-                showLyricsPanel.toggle()
+        HoverButton(icon: "quote.bubble", scale: .medium) {
+            showLyricsPanel = true
+            withAnimation(.smooth) {
+                BoringViewCoordinator.shared.currentView = .lyrics
             }
         }
     }
