@@ -425,12 +425,19 @@ struct NotchHomeView: View {
     @ObservedObject var webcamManager = WebcamManager.shared
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var coordinator = BoringViewCoordinator.shared
+    @Default(.showLyricsPanel) private var lyricsMode
     let albumArtNamespace: Namespace.ID
 
     var body: some View {
         Group {
             if !coordinator.firstLaunch {
-                mainContent
+                // The lyrics button in the header crossfades between the two layouts
+                if lyricsMode {
+                    NotchLyricsView()
+                        .transition(.opacity)
+                } else {
+                    mainContent
+                }
             }
         }
         // simplified: use a straightforward opacity transition

@@ -376,9 +376,6 @@ class MusicManager: ObservableObject {
     }
 
     private func lyricsSettingsChanged() {
-        if !Defaults[.showLyricsPanel] && coordinator.currentView == .lyrics {
-            coordinator.currentView = .home
-        }
         if isLyricsFeatureEnabled {
             if syncedLyrics.isEmpty && currentLyrics.isEmpty && !isFetchingLyrics {
                 lyricsRequestKey = nil
