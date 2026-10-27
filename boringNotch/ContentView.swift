@@ -84,6 +84,13 @@ struct ContentView: View {
         return chinWidth
     }
 
+    /// The line for the strip under the closed notch; nil hides the strip (also during instrumental breaks).
+    private var closedLyricLine: LyricLine? {
+        guard Defaults[.showClosedLyrics], musicManager.isPlaying, !coordinator.sneakPeek.show,
+              let line = musicManager.currentLyricLine, !line.isInterlude else { return nil }
+        return line
+    }
+
     var body: some View {
         // Calculate scale based on gesture progress only
         let gestureScale: CGFloat = {
@@ -297,8 +304,16 @@ struct ContentView: View {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
                               .transition(.opacity)
                       } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed {
-                          MusicLiveActivity()
-                              .frame(alignment: .center)
+                          VStack(spacing: 0) {
+                              MusicLiveActivity()
+                              if let line = closedLyricLine {
+                                  ClosedLyricsStrip(
+                                      line: line,
+                                      width: vm.closedNotchSize.width + 2 * max(0, vm.effectiveClosedNotchHeight - 12) - 8
+                                  )
+                              }
+                          }
+                          .frame(alignment: .center)
                       } else if !coordinator.expandingView.show && vm.notchState == .closed && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace] && !vm.hideOnClosed  {
                           BoringFaceAnimation()
                        } else if vm.notchState == .open {

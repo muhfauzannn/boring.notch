@@ -673,6 +673,7 @@ struct Media: View {
     @Default(.sneakPeekStyles) var sneakPeekStyles
 
     @Default(.enableLyrics) var enableLyrics
+    @Default(.lyricsOffset) var lyricsOffset
 
     var body: some View {
         Form {
@@ -752,16 +753,39 @@ struct Media: View {
             
             Section {
                 MusicSlotConfigurationView()
+            } header: {
+                Text("Media controls")
+            }  footer: {
+                Text("Customize which controls appear in the music player. Volume expands when active.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Defaults.Toggle(key: .showLyricsPanel) {
+                    Text("Show synced lyrics in the open notch")
+                }
+                Defaults.Toggle(key: .showClosedLyrics) {
+                    Text("Show the current lyric under the closed notch")
+                }
                 Defaults.Toggle(key: .enableLyrics) {
                     HStack {
                         Text("Show lyrics below artist name")
                         customBadge(text: "Beta")
                     }
                 }
+                HStack {
+                    Text("Lyrics timing")
+                    Slider(value: $lyricsOffset, in: -2...2, step: 0.1)
+                    Text(String(format: "%+.1f s", lyricsOffset))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .frame(width: 52, alignment: .trailing)
+                }
             } header: {
-                Text("Media controls")
-            }  footer: {
-                Text("Customize which controls appear in the music player. Volume expands when active.")
+                Text("Lyrics")
+            } footer: {
+                Text("Synced lyrics come from LRCLIB, a free community database, so some songs have no timed lyrics. Add the Lyrics button to the media controls to switch views from the notch. Move the timing slider right if lyrics lag behind the music.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
