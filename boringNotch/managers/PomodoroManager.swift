@@ -120,6 +120,8 @@ final class PomodoroManager: ObservableObject {
     private var completionTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
     private var wakeObserver: NSObjectProtocol?
+    private var dayChangeObserver: NSObjectProtocol?
+    private let notificationDelegate = PomodoroNotificationDelegate()
 
     /// Running or paused: something worth showing in the closed notch.
     var isActive: Bool { status != .idle }
@@ -169,6 +171,13 @@ final class PomodoroManager: ObservableObject {
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in
             Task { @MainActor in self?.checkCompletion() }
+        }
+
+        // Start today's numbers from zero at midnight, even while the timer sits idle.
+        dayChangeObserver = NotificationCenter.default.addObserver(
+            forName: .NSCalendarDayChanged, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.rollStatsIfNeeded() }
         }
     }
 
@@ -303,21 +312,21 @@ final class PomodoroManager: ObservableObject {
     private func advance(completed: Bool, notify: Bool = true) {
         completionTask?.cancel()
         let finished = phase
+        let next = nextPhase
+        let endedAt = endDate ?? Date()
 
         if finished == .focus {
             cyclePosition += 1
-            if completed {
-                rollStatsIfNeeded()
+            rollStatsIfNeeded()
+            // A session counts for the day it ended; one that ended on an earlier day
+            // while the app was closed doesn't count for today.
+            if completed && Self.dayKey(endedAt) == statsDay {
                 sessionsToday += 1
                 focusSecondsToday += phaseDuration
             }
         } else if finished == .longBreak {
             cyclePosition = 0
         }
-
-        let next: PomodoroPhase = finished.isBreak
-            ? .focus
-            : (cyclePosition % sessionsUntilLongBreak == 0 ? .longBreak : .shortBreak)
 
         setIdle(next)
 
@@ -361,13 +370,18 @@ final class PomodoroManager: ObservableObject {
     }
 
     private func postNotification(finished: PomodoroPhase, next: PomodoroPhase) {
+        let center = UNUserNotificationCenter.current()
+        // Without a delegate macOS may hold back banners while the app counts as active.
+        if center.delegate == nil {
+            center.delegate = notificationDelegate
+        }
         let content = UNMutableNotificationContent()
         content.title = Self.finishedTitle(finished)
         content.body = Self.nextLine(next)
         // The app plays its own sound when one is picked.
         content.sound = nil
         let request = UNNotificationRequest(identifier: "pomodoro-\(UUID().uuidString)", content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request)
+        center.add(request)
     }
 
     /// Asks macOS for permission; turns the setting back off when refused.
@@ -386,7 +400,7 @@ final class PomodoroManager: ObservableObject {
         return "\(components.year ?? 0)-\(components.month ?? 0)-\(components.day ?? 0)"
     }
 
-    private func rollStatsIfNeeded() {
+    func rollStatsIfNeeded() {
         let today = Self.dayKey()
         guard statsDay != today else { return }
         statsDay = today
@@ -435,5 +449,16 @@ final class PomodoroManager: ObservableObject {
                 advance(completed: true, notify: false)
             }
         }
+    }
+}
+
+/// Lets focus-timer banners show even while boring.notch counts as the active app.
+final class PomodoroNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .list])
     }
 }

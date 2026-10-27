@@ -458,14 +458,7 @@ struct FocusSettings: View {
             } header: {
                 Text("Feedback")
             } footer: {
-                Text("Haptic feedback follows the haptics setting in General.")
-            }
-            .disabled(!enabled)
-
-            Section {
-                KeyboardShortcuts.Recorder("Start or pause timer:", name: .togglePomodoro)
-            } header: {
-                Text("Shortcut")
+                Text("Haptic feedback follows the haptics setting in General. A shortcut to start or pause the timer can be set in Shortcuts.")
             }
             .disabled(!enabled)
         }

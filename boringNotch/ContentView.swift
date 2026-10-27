@@ -37,6 +37,8 @@ struct ContentView: View {
     @Default(.useMusicVisualizer) var useMusicVisualizer
 
     @Default(.showNotHumanFace) var showNotHumanFace
+    @Default(.pomodoroEnabled) var pomodoroEnabled
+    @Default(.pomodoroShowInClosedNotch) var pomodoroShowInClosedNotch
 
     // Shared interactive spring for movement/resizing to avoid conflicting animations
     private let animationSpring = Animation.interactiveSpring(response: 0.38, dampingFraction: 0.8, blendDuration: 0)
@@ -93,8 +95,10 @@ struct ContentView: View {
 
     /// A running or paused focus timer takes the closed notch over from the music activity.
     private var showFocusLiveActivity: Bool {
-        vm.notchState == .closed && !vm.hideOnClosed && !coordinator.expandingView.show
-            && pomodoro.isActive && Defaults[.pomodoroEnabled] && Defaults[.pomodoroShowInClosedNotch]
+        let inlineHUDShowing = coordinator.sneakPeek.show && Defaults[.inlineHUD]
+            && coordinator.sneakPeek.type != .music && coordinator.sneakPeek.type != .battery
+        return vm.notchState == .closed && !vm.hideOnClosed && !coordinator.expandingView.show
+            && !inlineHUDShowing && pomodoro.isActive && pomodoroEnabled && pomodoroShowInClosedNotch
     }
 
     /// The line for the strip under the closed notch; nil hides the strip (also during instrumental breaks).

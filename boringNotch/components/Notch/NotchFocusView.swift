@@ -39,6 +39,7 @@ struct NotchFocusView: View {
         .padding(.leading, 4)
         .transition(.opacity)
         .blur(radius: vm.notchState == .closed ? 30 : 0)
+        .onAppear { pomodoro.rollStatsIfNeeded() }
     }
 }
 

@@ -14,10 +14,11 @@ struct BoringHeader: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @StateObject var tvm = ShelfStateViewModel.shared
     @Default(.showLyricsPanel) var lyricsMode
+    @Default(.pomodoroEnabled) var pomodoroEnabled
     var body: some View {
         HStack(spacing: 0) {
             HStack {
-                if ((!tvm.isEmpty || coordinator.alwaysShowTabs) && Defaults[.boringShelf]) || AIUsageManager.shared.isEnabled || Defaults[.pomodoroEnabled] {
+                if ((!tvm.isEmpty || coordinator.alwaysShowTabs) && Defaults[.boringShelf]) || AIUsageManager.shared.isEnabled || pomodoroEnabled {
                     TabSelectionView()
                 } else if vm.notchState == .open {
                     EmptyView()
