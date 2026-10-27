@@ -762,9 +762,6 @@ struct Media: View {
             }
 
             Section {
-                Defaults.Toggle(key: .showLyricsPanel) {
-                    Text("Show a Lyrics tab in the open notch")
-                }
                 Defaults.Toggle(key: .showClosedLyrics) {
                     Text("Show the current lyric under the closed notch")
                 }
@@ -785,7 +782,7 @@ struct Media: View {
             } header: {
                 Text("Lyrics")
             } footer: {
-                Text("Synced lyrics come from LRCLIB, a free community database, so some songs have no timed lyrics. Add the Lyrics button to the media controls to jump to the Lyrics tab. Move the timing slider right if lyrics lag behind the music.")
+                Text("Synced lyrics come from LRCLIB, a free community database, so some songs have no timed lyrics. Use the lyrics button in the notch header (or add it to the media controls) to switch Home to lyrics. Move the timing slider right if lyrics lag behind the music.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

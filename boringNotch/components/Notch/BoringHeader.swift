@@ -13,11 +13,11 @@ struct BoringHeader: View {
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @StateObject var tvm = ShelfStateViewModel.shared
-    @Default(.showLyricsPanel) var showLyricsTab
+    @Default(.showLyricsPanel) var lyricsMode
     var body: some View {
         HStack(spacing: 0) {
             HStack {
-                if ((!tvm.isEmpty || coordinator.alwaysShowTabs) && Defaults[.boringShelf]) || AIUsageManager.shared.isEnabled || showLyricsTab {
+                if ((!tvm.isEmpty || coordinator.alwaysShowTabs) && Defaults[.boringShelf]) || AIUsageManager.shared.isEnabled {
                     TabSelectionView()
                 } else if vm.notchState == .open {
                     EmptyView()
@@ -43,6 +43,28 @@ struct BoringHeader: View {
                         OpenNotchHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon)
                             .transition(.scale(scale: 0.8).combined(with: .opacity))
                     } else {
+                        if coordinator.currentView == .home {
+                            // Switches Home between the player and lyrics, in place
+                            Button(action: {
+                                withAnimation(.smooth(duration: 0.3)) {
+                                    lyricsMode.toggle()
+                                }
+                            }) {
+                                Capsule()
+                                    .fill(.black)
+                                    .frame(width: 30, height: 30)
+                                    .overlay {
+                                        Image(systemName: lyricsMode ? "quote.bubble.fill" : "quote.bubble")
+                                            .foregroundColor(lyricsMode ? .white : .gray)
+                                            .padding()
+                                            .imageScale(.medium)
+                                            .contentTransition(.symbolEffect(.replace))
+                                    }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .help(lyricsMode ? "Hide lyrics" : "Show lyrics")
+                            .accessibilityLabel(lyricsMode ? "Hide lyrics" : "Show lyrics")
+                        }
                         if Defaults[.showMirror] {
                             Button(action: {
                                 vm.toggleCameraPreview()

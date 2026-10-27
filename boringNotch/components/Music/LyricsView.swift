@@ -8,10 +8,9 @@
 import Defaults
 import SwiftUI
 
-// MARK: - Lyrics tab
+// MARK: - Home lyrics mode
 
-/// The Lyrics tab: a compact now-playing column next to the synced lyrics,
-/// so the Home tab keeps its player, calendar and camera untouched.
+/// Home in lyrics mode: a compact now-playing column next to the synced lyrics.
 struct NotchLyricsView: View {
     @ObservedObject private var musicManager = MusicManager.shared
     @Default(.playerColorTinting) private var playerColorTinting
@@ -65,7 +64,7 @@ struct NotchLyricsView: View {
                 .frame(maxWidth: .infinity)
         }
         .padding(.top, 2)
-        // Fill the tab area exactly like Home does, so the header doesn't shift when switching tabs
+        // Fill the same area as the regular Home layout, so nothing shifts when switching modes
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .clipped()
     }
@@ -169,7 +168,7 @@ struct SyncedLyricsScroller: View {
     @ObservedObject private var musicManager = MusicManager.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var heights: [Int: CGFloat] = [:]
-    // Start on the current line so opening the tab doesn't scroll in from the top
+    // Start on the current line so switching to lyrics doesn't scroll in from the top
     @State private var shownIndex: Int = MusicManager.shared.currentLyricIndex ?? 0
     @State private var jump: Int = 1
     @State private var hoveredID: Int?
@@ -199,7 +198,7 @@ struct SyncedLyricsScroller: View {
         .opacity(heights.isEmpty ? 0 : 1)
         .animation(.easeOut(duration: 0.25), value: heights.isEmpty)
         .onPreferenceChange(LyricHeightsKey.self) { newHeights in
-            // Measurements are layout, not motion: never animate them (e.g. inside a tab switch)
+            // Measurements are layout, not motion: never animate them (e.g. inside the mode switch)
             var transaction = Transaction()
             transaction.disablesAnimations = true
             withTransaction(transaction) {
@@ -427,15 +426,18 @@ struct ClosedLyricsStrip: View {
 
 // MARK: - Toolbar button
 
-/// Jumps to the Lyrics tab (turning it on if needed).
+/// Switches Home into lyrics mode and back.
 struct LyricsToggleButton: View {
-    @Default(.showLyricsPanel) private var showLyricsPanel
+    @Default(.showLyricsPanel) private var lyricsMode
 
     var body: some View {
-        HoverButton(icon: "quote.bubble", scale: .medium) {
-            showLyricsPanel = true
-            withAnimation(.smooth) {
-                BoringViewCoordinator.shared.currentView = .lyrics
+        HoverButton(
+            icon: lyricsMode ? "quote.bubble.fill" : "quote.bubble",
+            iconColor: lyricsMode ? .white : .primary,
+            scale: .medium
+        ) {
+            withAnimation(.smooth(duration: 0.3)) {
+                lyricsMode.toggle()
             }
         }
     }
