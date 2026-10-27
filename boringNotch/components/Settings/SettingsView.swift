@@ -391,9 +391,33 @@ struct AIUsageSettings: View {
     @ObservedObject var usageManager = AIUsageManager.shared
     @Default(.aiUsageWarnThreshold) var warnThreshold
     @Default(.aiUsageRefreshInterval) var refreshInterval
+    @State private var isGrantingAccess = false
+    @State private var grantMessage: String?
 
     var body: some View {
         Form {
+            if usageManager.claudeKeychainBlocked {
+                Section {
+                    Button("Grant Keychain access…") {
+                        isGrantingAccess = true
+                        grantMessage = nil
+                        Task {
+                            grantMessage = await usageManager.grantClaudeKeychainAccess()
+                            isGrantingAccess = false
+                        }
+                    }
+                    .disabled(isGrantingAccess)
+                    if let grantMessage {
+                        Text(grantMessage)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Claude Keychain access")
+                } footer: {
+                    Text("macOS will ask once for your login password. Choose Always Allow so boring.notch can keep reading the Claude Code sign-in. Only the Claude card needs this.")
+                }
+            }
             Section {
                 Defaults.Toggle(key: .showClaudeUsage) {
                     serviceLabel(.claude, source: "Uses your Claude Code sign-in")

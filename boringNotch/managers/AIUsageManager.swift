@@ -17,6 +17,8 @@ final class AIUsageManager: ObservableObject {
     @Published private(set) var states: [AIService: UsageState] = [:]
     /// The service whose warning the closed notch is showing.
     @Published private(set) var warningService: AIService?
+    /// Claude Code's Keychain item can't be read yet, so Settings offers a one-time "Grant access".
+    @Published private(set) var claudeKeychainBlocked = false
 
     var enabledServices: [AIService] {
         AIService.allCases.filter(\.isEnabled)
@@ -48,6 +50,7 @@ final class AIUsageManager: ObservableObject {
         for service in AIService.allCases where !service.isEnabled {
             states[service] = nil
             warnedWindows[service] = nil
+            if service == .claude { claudeKeychainBlocked = false }
         }
         guard isEnabled else {
             if BoringViewCoordinator.shared.currentView == .usage {
@@ -95,6 +98,11 @@ final class AIUsageManager: ObservableObject {
         let result = await XPCHelperClient.shared.fetchAIUsage(service: service.rawValue)
         guard service.isEnabled else { return }
 
+        if service == .claude {
+            claudeKeychainBlocked = result.data == nil
+                && (result.error == "keychainApproval" || result.error?.hasPrefix("keychain:") == true)
+        }
+
         if let data = result.data, let snapshot = AIUsageParser.parse(data, for: service) {
             states[service] = .loaded(snapshot)
             checkWarning(snapshot, for: service)
@@ -128,6 +136,21 @@ final class AIUsageManager: ObservableObject {
             }
         }
         warnedWindows[service] = warned
+    }
+
+    /// Shows the macOS Keychain dialog for the Claude Code item, then reloads.
+    /// Returns a message when access still isn't working, nil on success.
+    func grantClaudeKeychainAccess() async -> String? {
+        let error = await XPCHelperClient.shared.requestClaudeKeychainAccess()
+        await refresh()
+        guard let error else { return nil }
+        switch error {
+        case "denied": return "Access was denied. Try again and choose Allow or Always Allow."
+        case "notSignedIn": return "No Claude Code sign-in found. Sign in with Claude Code first."
+        case "credentialsUnreadable": return "Couldn't read the Claude Code sign-in."
+        case "helperUnavailable": return "Helper unavailable"
+        default: return "Keychain returned \(error.replacingOccurrences(of: "api:", with: ""))"
+        }
     }
 
     /// The window that triggered the current warning, for the closed-notch view.

@@ -8,11 +8,13 @@
 //
 
 import Foundation
+import Security
 
 extension BoringNotchXPCHelper {
 
     /// Replies with a JSON envelope `{"plan": String?, "usage": Object}` or an error code:
-    /// `notSignedIn`, `expired`, `http:<status>`, `network:<description>`, `badResponse`, `unknownService`.
+    /// `notSignedIn`, `keychainApproval`, `expired`, `http:<status>`, `network:<description>`,
+    /// `badResponse`, `unknownService`.
     @objc func fetchAIUsage(_ service: String, with reply: @escaping (Data?, String?) -> Void) {
         switch service {
         case "claude":
@@ -99,6 +101,12 @@ extension BoringNotchXPCHelper {
         if let json = lookup(in: nil) { return .success(json) }
         if firstFailure != nil, let json = lookup(in: loginKeychain) { return .success(json) }
 
+        // Then ask the Keychain directly, as this helper. It never shows a dialog on a background
+        // poll: if approval is needed it fails, and the user grants it from Settings once
+        // (see requestClaudeKeychainAccess). After "Always Allow" this read succeeds silently.
+        let direct = readClaudeKeychainItem(allowPrompt: false)
+        if let json = direct.json { return .success(json) }
+
         // Older Claude Code versions store the sign-in in a file instead of the Keychain.
         let file = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".claude/.credentials.json")
@@ -107,8 +115,61 @@ extension BoringNotchXPCHelper {
             return .success(json)
         }
 
-        if let firstFailure { return .failure(firstFailure) }
+        let needsApproval = [errSecInteractionNotAllowed, errSecAuthFailed, errSecUserCanceled]
+        if needsApproval.contains(direct.status) {
+            return .failure(CredentialError(code: "keychainApproval"))
+        }
+        if let firstFailure {
+            return .failure(CredentialError(
+                code: "\(firstFailure.code) [api \(direct.status)]", status: firstFailure.status))
+        }
         return .failure(CredentialError(code: unreadable ? "credentialsUnreadable" : "notSignedIn"))
+    }
+
+    /// Reads the "Claude Code-credentials" item through the Security framework.
+    /// With `allowPrompt` false, an item that needs approval fails with
+    /// `errSecInteractionNotAllowed` instead of asking; with true, macOS shows its
+    /// "wants to use your confidential information" dialog (Allow / Always Allow / Deny).
+    private func readClaudeKeychainItem(allowPrompt: Bool) -> (json: [String: Any]?, status: OSStatus) {
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "Claude Code-credentials",
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        if !allowPrompt {
+            query[kSecUseAuthenticationUI as String] = kSecUseAuthenticationUIFail
+        }
+
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        guard status == errSecSuccess, let data = item as? Data else { return (nil, status) }
+
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            return (json, status)
+        }
+        // Stored as hex text rather than raw JSON.
+        let text = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        return (parseCredentialOutput(text), status)
+    }
+
+    /// One-time approval, started by the user from Settings > AI Usage. Replies nil once the item
+    /// can be read, or an error code: `notSignedIn`, `denied`, `api:<OSStatus>`.
+    @objc func requestClaudeKeychainAccess(with reply: @escaping (String?) -> Void) {
+        // The system dialog blocks this call until the user answers it.
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = self.readClaudeKeychainItem(allowPrompt: true)
+            switch result.status {
+            case errSecSuccess:
+                reply(result.json == nil ? "credentialsUnreadable" : nil)
+            case errSecItemNotFound:
+                reply("notSignedIn")
+            case errSecUserCanceled, errSecAuthFailed:
+                reply("denied")
+            default:
+                reply("api:\(result.status)")
+            }
+        }
     }
 
     private func runSecurityTool(_ arguments: [String]) -> Result<String, CredentialError> {
