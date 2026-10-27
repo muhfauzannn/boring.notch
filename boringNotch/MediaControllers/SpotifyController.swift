@@ -97,7 +97,11 @@ class SpotifyController: MediaControllerProtocol {
     }
     
     func updatePlaybackInfo() async {
+        let requestStart = Date()
         guard let descriptor = try? await fetchPlaybackInfoAsync() else { return }
+        // The position was read somewhere during the AppleScript round trip; stamp it at the midpoint
+        // so extrapolated positions (and synced lyrics) don't trail by the script's latency
+        let sampledAt = requestStart.addingTimeInterval(Date().timeIntervalSince(requestStart) / 2)
         guard descriptor.numberOfItems >= 10 else { return }
         
         let isPlaying = descriptor.atIndex(1)?.booleanValue ?? false
@@ -122,7 +126,7 @@ class SpotifyController: MediaControllerProtocol {
             playbackRate: 1,
             isShuffled: isShuffled,
             repeatMode: isRepeating ? .all : .off,
-            lastUpdated: Date(),
+            lastUpdated: sampledAt,
             artwork: nil,
             volume: Double(volumePercentage) / 100.0
         )

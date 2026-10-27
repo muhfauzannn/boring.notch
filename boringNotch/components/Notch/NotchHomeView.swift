@@ -447,8 +447,9 @@ struct NotchHomeView: View {
             MusicPlayerView(albumArtNamespace: albumArtNamespace)
 
             if showLyricsPanel {
+                // Same box as the calendar, so the panel lines up with the album art and stays below the header
                 LyricsPanelView()
-                    .frame(width: shouldShowCamera ? 220 : 280)
+                    .frame(width: shouldShowCamera ? 220 : 280, height: 120)
                     .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .leading)))
             } else if Defaults[.showCalendar] {
                 CalendarView()

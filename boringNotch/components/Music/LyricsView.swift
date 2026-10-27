@@ -17,11 +17,14 @@ struct LyricsPanelView: View {
     var body: some View {
         ZStack {
             if lightingEffect {
-                Circle()
-                    .fill(Color(nsColor: musicManager.avgColor))
-                    .frame(width: 220, height: 220)
-                    .blur(radius: 70)
-                    .opacity(musicManager.isPlaying ? 0.22 : 0.08)
+                // A gradient rather than a blurred circle, so the glow never spills outside the panel
+                RadialGradient(
+                    colors: [Color(nsColor: musicManager.avgColor).opacity(0.22), .clear],
+                    center: .leading,
+                    startRadius: 0,
+                    endRadius: 180
+                )
+                .opacity(musicManager.isPlaying ? 1 : 0.35)
                     .allowsHitTesting(false)
                     .animation(.easeInOut(duration: 0.9), value: musicManager.isPlaying)
             }
@@ -33,6 +36,7 @@ struct LyricsPanelView: View {
         .animation(.easeInOut(duration: 0.35), value: musicManager.lyricsTrackKey)
         .animation(.easeInOut(duration: 0.35), value: musicManager.isFetchingLyrics)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
     }
 
     @ViewBuilder
@@ -198,6 +202,8 @@ struct SyncedLyricsScroller: View {
                 hoveredID = nil
             }
         }
+        // Far lines are offset outside the panel; keep them from catching clicks over the header
+        .allowsHitTesting(abs(distance) <= 1)
         .accessibilityLabel(line.isInterlude ? "Instrumental break" : line.text)
     }
 
@@ -229,9 +235,9 @@ struct SyncedLyricsScroller: View {
         if jump > 2 {
             return .smooth(duration: 0.35)
         }
-        // Lines above move first, so the stack moves as a wave from top to bottom
-        return .spring(response: 0.55, dampingFraction: 0.82)
-            .delay(Double(max(0, distance + 2)) * 0.035)
+        // The current line and those above move at once; lines below trail by 25 ms each
+        return .spring(response: 0.42, dampingFraction: 0.82)
+            .delay(Double(max(0, distance)) * 0.025)
     }
 }
 

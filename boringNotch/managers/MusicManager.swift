@@ -473,9 +473,13 @@ class MusicManager: ObservableObject {
     }
 
     // MARK: - Synced lyrics helpers
-    /// Playback position used for lyrics, shifted by the user's sync offset.
+    /// Lines switch this much before their timestamp so they land as the singing starts,
+    /// not after the animation has settled.
+    private static let lyricsLeadTime: TimeInterval = 0.35
+
+    /// Playback position used for lyrics, shifted by the lead time and the user's sync offset.
     func lyricsPosition(at date: Date = Date()) -> TimeInterval {
-        estimatedPlaybackPosition(at: date) + Defaults[.lyricsOffset]
+        estimatedPlaybackPosition(at: date) + Self.lyricsLeadTime + Defaults[.lyricsOffset]
     }
 
     func lyricIndex(at position: TimeInterval) -> Int? {
@@ -505,7 +509,7 @@ class MusicManager: ObservableObject {
     private func updateLyricsClock() {
         let shouldRun = isPlaying && !syncedLyrics.isEmpty && isLyricsFeatureEnabled
         if shouldRun, lyricsTimer == nil {
-            let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
+            let timer = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in
                 self?.lyricsTimerFired()
             }
             RunLoop.main.add(timer, forMode: .common)
@@ -520,7 +524,7 @@ class MusicManager: ObservableObject {
         tickLyrics(animated: true)
         lyricsTickCount += 1
         // Spotify doesn't notify when you scrub, so re-read its position every 2 s while lyrics are on screen
-        if lyricsTickCount % 20 == 0,
+        if lyricsTickCount % 40 == 0,
            Defaults[.showLyricsPanel] || Defaults[.showClosedLyrics],
            activeController is SpotifyController {
             forceUpdate()
