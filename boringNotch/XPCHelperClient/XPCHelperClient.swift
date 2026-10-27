@@ -259,6 +259,22 @@ final class XPCHelperClient: NSObject {
             return (nil, "helperUnavailable")
         }
     }
+
+    /// Shows the macOS Keychain approval dialog for the Claude Code item. Nil means access works now.
+    nonisolated func requestClaudeKeychainAccess() async -> String? {
+        do {
+            let service = await MainActor.run {
+                ensureRemoteService()
+            }
+            return try await service.withContinuation { service, continuation in
+                service.requestClaudeKeychainAccess { error in
+                    continuation.resume(returning: error)
+                }
+            }
+        } catch {
+            return "helperUnavailable"
+        }
+    }
 }
 
 extension Notification.Name {

@@ -22,5 +22,7 @@ import Foundation
     func setScreenBrightness(_ value: Float, with reply: @escaping (Bool) -> Void)
     // AI usage: reads the CLI sign-in and fetches plan usage (performed by the helper, outside the sandbox)
     func fetchAIUsage(_ service: String, with reply: @escaping (Data?, String?) -> Void)
+    // Asks macOS to approve this helper for the Claude Code Keychain item (shows the system dialog)
+    func requestClaudeKeychainAccess(with reply: @escaping (String?) -> Void)
 }
 
