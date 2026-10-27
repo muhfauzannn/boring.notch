@@ -7,6 +7,7 @@
 
 import AppKit
 import Combine
+import Defaults
 import Foundation
 
 final class NowPlayingController: ObservableObject, MediaControllerProtocol {
@@ -334,6 +335,19 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
         
         reportedState = newPlaybackState
 
+        if !MusicApps.isAllowed(newPlaybackState.bundleIdentifier) {
+            // Not a music app (a browser tab, a video, a notification sound): never show it. If a music
+            // app was showing, keep following it the same way as when another app grabs Now Playing.
+            NSLog("[NowPlaying] ignoring non-music app \(newPlaybackState.bundleIdentifier.isEmpty ? "<none>" : newPlaybackState.bundleIdentifier)")
+            if !MusicApps.isAllowed(playbackState.bundleIdentifier) {
+                stopHoldingSource()
+                playbackState = Self.nothingPlaying
+            } else if !NSRunningApplication.runningApplications(withBundleIdentifier: playbackState.bundleIdentifier).isEmpty {
+                startHoldingSource()
+            }
+            return
+        }
+
         let hold = shouldHoldCurrentSource(over: newPlaybackState)
         NSLog("[NowPlaying] update from \(newPlaybackState.bundleIdentifier.isEmpty ? "<none>" : newPlaybackState.bundleIdentifier) playing=\(newPlaybackState.isPlaying) title=\"\(newPlaybackState.title)\" diff=\(diff) shown=\(playbackState.bundleIdentifier) -> \(hold ? "keep shown app" : "show update")")
         if hold {
@@ -347,6 +361,11 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
         // await fetchFavoriteStateIfSupported()
     }
     
+    /// Shown instead of a non-music app's playback
+    private static let nothingPlaying = PlaybackState(
+        bundleIdentifier: "com.apple.Music", title: "", artist: "", album: ""
+    )
+
     private static let directlyFollowableApps: Set<String> = ["com.spotify.client", "com.apple.Music"]
 
     /// Whether an update from another app should be ignored because the shown app is still playing.
@@ -394,7 +413,8 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
                 self.heldSourceIsPlaying = state.isPlaying
                 let reported = self.reportedState
                 if !state.isPlaying, reported.isPlaying, !reported.title.isEmpty,
-                   reported.bundleIdentifier != state.bundleIdentifier {
+                   reported.bundleIdentifier != state.bundleIdentifier,
+                   MusicApps.isAllowed(reported.bundleIdentifier) {
                     // The held app stopped while another app is really playing: show that one
                     NSLog("[NowPlaying] \(state.bundleIdentifier) stopped, switching to \(reported.bundleIdentifier)")
                     self.stopHoldingSource()
@@ -419,7 +439,9 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
     private func heldAppTerminated(_ bundleIdentifier: String?) {
         guard isHoldingSource, bundleIdentifier == playbackState.bundleIdentifier else { return }
         stopHoldingSource()
-        playbackState = reportedState
+        playbackState = MusicApps.isAllowed(reportedState.bundleIdentifier)
+            ? reportedState
+            : Self.nothingPlaying
     }
 
      private func fetchFavoriteStateIfSupported() async {
