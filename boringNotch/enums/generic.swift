@@ -31,6 +31,12 @@ public enum NotchViews {
     case focus
 }
 
+/// What the shelf tab shows: dropped files, or the clipboard history.
+public enum ShelfMode: CaseIterable, Hashable {
+    case files
+    case clipboard
+}
+
 enum SettingsEnum {
     case general
     case about

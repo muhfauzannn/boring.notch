@@ -172,6 +172,53 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         dragDetectors.removeAll()
     }
 
+    /// The notch on the screen the pointer is on, when there's one per screen.
+    @MainActor
+    private func viewModelUnderMouse() -> BoringViewModel {
+        guard Defaults[.showOnAllDisplays] else { return vm }
+        let mouseLocation = NSEvent.mouseLocation
+        for screen in NSScreen.screens where screen.frame.contains(mouseLocation) {
+            if let uuid = screen.displayUUID, let screenViewModel = viewModels[uuid] {
+                return screenViewModel
+            }
+        }
+        return vm
+    }
+
+    /// Opens the shelf on its clipboard side, or closes the notch if that's already showing.
+    @MainActor
+    private func toggleClipboardHistory() {
+        let viewModel = viewModelUnderMouse()
+        closeNotchTask?.cancel()
+        closeNotchTask = nil
+
+        if viewModel.notchState == .open && coordinator.currentView == .shelf && coordinator.shelfMode == .clipboard {
+            viewModel.close()
+            return
+        }
+
+        withAnimation(.smooth) {
+            coordinator.currentView = .shelf
+            coordinator.shelfMode = .clipboard
+        }
+        guard viewModel.notchState == .closed else { return }
+        viewModel.open()
+
+        // Close again if the pointer never comes to the notch; once it does, hovering takes over
+        let window = Defaults[.showOnAllDisplays] ? viewModel.screenUUID.flatMap { windows[$0] } : self.window
+        closeNotchTask = Task { @MainActor [weak viewModel, weak window] in
+            try? await Task.sleep(for: .seconds(4))
+            while !Task.isCancelled {
+                guard let viewModel, viewModel.notchState == .open else { return }
+                guard let frame = window?.frame, frame.contains(NSEvent.mouseLocation) else {
+                    viewModel.close()
+                    return
+                }
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
+    }
+
     private func setupDragDetectors() {
         cleanupDragDetectors()
 
@@ -286,6 +333,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             _ = AIUsageManager.shared
             // Restores a running focus timer and schedules its end
             _ = PomodoroManager.shared
+            // Starts watching the pasteboard so copies are recorded before the shelf is opened
+            _ = ClipboardHistoryViewModel.shared
         }
 
         NotificationCenter.default.addObserver(
@@ -378,6 +427,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 withAnimation(.smooth) {
                     PomodoroManager.shared.toggle()
                 }
+            }
+        }
+
+        KeyboardShortcuts.onKeyDown(for: .clipboardHistoryPanel) { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, Defaults[.clipboardHistoryEnabled], Defaults[.boringShelf] else { return }
+                self.toggleClipboardHistory()
             }
         }
 

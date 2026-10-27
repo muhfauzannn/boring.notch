@@ -7,23 +7,40 @@
 
 import SwiftUI
 import AppKit
+import Defaults
 
 struct ShelfView: View {
     @EnvironmentObject var vm: BoringViewModel
     @StateObject var tvm = ShelfStateViewModel.shared
     @StateObject var selection = ShelfSelectionModel.shared
     @StateObject private var quickLookService = QuickLookService()
+    @ObservedObject var coordinator = BoringViewCoordinator.shared
+    @Default(.clipboardHistoryEnabled) var clipboardHistoryEnabled
     private let spacing: CGFloat = 8
+
+    private var showsClipboard: Bool {
+        clipboardHistoryEnabled && coordinator.shelfMode == .clipboard
+    }
 
     var body: some View {
         HStack(spacing: 12) {
-            FileShareView()
-                .aspectRatio(1, contentMode: .fit)
-                .environmentObject(vm)
-            panel
-                .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], isTargeted: $vm.dragDetectorTargeting) { providers in
-                    handleDrop(providers: providers)
-                }
+            if clipboardHistoryEnabled {
+                ShelfModePicker()
+            }
+            if showsClipboard {
+                ClipboardHistoryView()
+                    .transition(.opacity)
+            } else {
+                FileShareView()
+                    .aspectRatio(1, contentMode: .fit)
+                    .environmentObject(vm)
+                    .transition(.opacity)
+                panel
+                    .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], isTargeted: $vm.dragDetectorTargeting) { providers in
+                        handleDrop(providers: providers)
+                    }
+                    .transition(.opacity)
+            }
         }
         // Bind Quick Look to shelf selection
         .onChange(of: selection.selectedIDs) {
