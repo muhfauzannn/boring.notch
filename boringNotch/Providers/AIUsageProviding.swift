@@ -175,11 +175,28 @@ enum AIUsageParser {
         case "credentialsUnreadable": return "Couldn't read the Claude Code sign-in"
         case "badResponse": return "Unexpected response"
         default:
-            if error.hasPrefix("keychain:") { return "Keychain access failed (\(error.dropFirst(9))). Unlock your Keychain and retry" }
+            if error.hasPrefix("keychain:") { return keychainMessage(error) }
             if error.hasPrefix("http:429") { return "Rate limited, will retry" }
             if error.hasPrefix("http:") { return "Request failed (\(error.dropFirst(5)))" }
             if error.hasPrefix("network:") { return "Offline" }
             return "Couldn't load usage"
+        }
+    }
+
+    /// `keychain:<exit status>:<first line of stderr>`, `keychain:timeout` or `keychain:launch:<reason>`.
+    private static func keychainMessage(_ error: String) -> String {
+        let parts = error.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false).map(String.init)
+        let kind = parts.count > 1 ? parts[1] : ""
+        let detail = parts.count > 2 ? String(parts[2].prefix(90)) : ""
+        switch kind {
+        case "timeout":
+            return "Keychain didn't answer. Unlock the login keychain, then Refresh now"
+        case "36":
+            return "Keychain is locked or needs approval (36). Unlock the login keychain in Keychain Access"
+        case "51", "128":
+            return "Keychain access was denied (\(kind)). Refresh and choose Always Allow"
+        default:
+            return "Keychain access failed (\(kind))" + (detail.isEmpty ? "" : ": \(detail)")
         }
     }
 }

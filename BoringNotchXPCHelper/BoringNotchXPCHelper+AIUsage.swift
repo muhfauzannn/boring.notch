@@ -57,6 +57,8 @@ extension BoringNotchXPCHelper {
 
     private struct CredentialError: Error {
         let code: String
+        /// Exit status of `security`, when that is what failed.
+        var status: Int32?
     }
 
     private func claudeCredentials() -> Result<[String: Any], CredentialError> {
@@ -65,22 +67,37 @@ extension BoringNotchXPCHelper {
         // framework from this helper would need an approval prompt, which an XPC service
         // can't reliably show, so the read fails and looks like "not signed in".
         // Going through the same tool Claude Code uses needs no prompt.
-        var lastFailure: CredentialError?
-        for account in [NSUserName(), nil] as [String?] {
-            var arguments = ["find-generic-password", "-s", "Claude Code-credentials"]
-            if let account { arguments += ["-a", account] }
-            arguments.append("-w")
+        let loginKeychain = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Keychains/login.keychain-db").path
 
-            switch runSecurityTool(arguments) {
-            case .success(let output):
-                if let json = parseCredentialOutput(output) { return .success(json) }
-                lastFailure = CredentialError(code: "credentialsUnreadable")
-            case .failure(let error):
-                // 44 = errSecItemNotFound: try the next account lookup, then the file.
-                if error.code != "keychain:44" { return .failure(error) }
-                lastFailure = lastFailure ?? CredentialError(code: "notSignedIn")
+        var firstFailure: CredentialError?
+        var unreadable = false
+
+        func lookup(in keychain: String?) -> [String: Any]? {
+            for account in [nil, NSUserName()] as [String?] {
+                var arguments = ["find-generic-password", "-s", "Claude Code-credentials"]
+                if let account { arguments += ["-a", account] }
+                arguments.append("-w")
+                if let keychain { arguments.append(keychain) }
+
+                switch runSecurityTool(arguments) {
+                case .success(let output):
+                    if let json = parseCredentialOutput(output) { return json }
+                    unreadable = true
+                case .failure(let error):
+                    // 44 = errSecItemNotFound: try the next lookup.
+                    if error.status == 44 { continue }
+                    firstFailure = firstFailure ?? error
+                    return nil
+                }
             }
+            return nil
         }
+
+        // Plain lookup first. If the default keychain can't be resolved or reached from this
+        // process, retry with the login keychain named explicitly.
+        if let json = lookup(in: nil) { return .success(json) }
+        if firstFailure != nil, let json = lookup(in: loginKeychain) { return .success(json) }
 
         // Older Claude Code versions store the sign-in in a file instead of the Keychain.
         let file = FileManager.default.homeDirectoryForCurrentUser
@@ -89,33 +106,53 @@ extension BoringNotchXPCHelper {
            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
             return .success(json)
         }
-        return .failure(lastFailure ?? CredentialError(code: "notSignedIn"))
+
+        if let firstFailure { return .failure(firstFailure) }
+        return .failure(CredentialError(code: unreadable ? "credentialsUnreadable" : "notSignedIn"))
     }
 
     private func runSecurityTool(_ arguments: [String]) -> Result<String, CredentialError> {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
         process.arguments = arguments
+        // An XPC service can start with a thin environment; `security` finds the user's
+        // keychains from HOME.
+        var environment = ProcessInfo.processInfo.environment
+        environment["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
+        process.environment = environment
         let stdout = Pipe()
+        let stderr = Pipe()
+        process.standardInput = FileHandle.nullDevice
         process.standardOutput = stdout
-        process.standardError = Pipe()
+        process.standardError = stderr
 
         do {
             try process.run()
         } catch {
-            return .failure(CredentialError(code: "keychain:launch"))
+            return .failure(CredentialError(code: "keychain:launch:\(error.localizedDescription)"))
         }
 
-        // A locked Keychain makes `security` wait for the user; don't hang the helper.
-        DispatchQueue.global().asyncAfter(deadline: .now() + 15) {
+        // A locked Keychain makes `security` wait for the user to type a password. Give them
+        // time to do that, but don't hang the helper forever.
+        DispatchQueue.global().asyncAfter(deadline: .now() + 60) {
             if process.isRunning { process.terminate() }
         }
 
         let data = stdout.fileHandleForReading.readDataToEndOfFile()
+        let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
 
+        if process.terminationReason == .uncaughtSignal {
+            return .failure(CredentialError(code: "keychain:timeout"))
+        }
         guard process.terminationStatus == 0 else {
-            return .failure(CredentialError(code: "keychain:\(process.terminationStatus)"))
+            // Keep the first line of stderr: it says why (locked, denied, no default keychain).
+            let detail = String(decoding: errorData, as: UTF8.self)
+                .split(whereSeparator: \.isNewline).first.map(String.init)?
+                .trimmingCharacters(in: .whitespaces) ?? ""
+            return .failure(CredentialError(
+                code: "keychain:\(process.terminationStatus):\(detail)",
+                status: process.terminationStatus))
         }
         return .success(String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines))
     }
