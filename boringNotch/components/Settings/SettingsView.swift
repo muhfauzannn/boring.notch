@@ -48,6 +48,9 @@ struct SettingsView: View {
                 NavigationLink(value: "AIUsage") {
                     Label("AI Usage", systemImage: "sparkles")
                 }
+                NavigationLink(value: "Focus") {
+                    Label("Focus", systemImage: "timer")
+                }
 //                NavigationLink(value: "Downloads") {
 //                    Label("Downloads", systemImage: "square.and.arrow.down")
 //                }
@@ -88,6 +91,8 @@ struct SettingsView: View {
                     Charge()
                 case "AIUsage":
                     AIUsageSettings()
+                case "Focus":
+                    FocusSettings()
                 case "Shelf":
                     Shelf()
                 case "Shortcuts":
@@ -384,6 +389,95 @@ struct Charge: View {
         }
         .accentColor(.effectiveAccent)
         .navigationTitle("Battery")
+    }
+}
+
+struct FocusSettings: View {
+    @Default(.pomodoroEnabled) var enabled
+    @Default(.pomodoroFocusMinutes) var focusMinutes
+    @Default(.pomodoroShortBreakMinutes) var shortBreakMinutes
+    @Default(.pomodoroLongBreakMinutes) var longBreakMinutes
+    @Default(.pomodoroSessionsUntilLongBreak) var sessionsUntilLongBreak
+    @Default(.pomodoroSound) var sound
+    @Default(.pomodoroNotifications) var notifications
+
+    var body: some View {
+        Form {
+            Section {
+                Defaults.Toggle(key: .pomodoroEnabled) {
+                    Text("Enable focus timer")
+                }
+            } footer: {
+                Text("Adds a Focus tab to the open notch with a Pomodoro timer: focus, then take a break, with a longer break after a few sessions.")
+            }
+
+            Section {
+                stepperRow("Focus", value: $focusMinutes, range: 1...90, unit: "min")
+                stepperRow("Short break", value: $shortBreakMinutes, range: 1...30, unit: "min")
+                stepperRow("Long break", value: $longBreakMinutes, range: 1...60, unit: "min")
+                stepperRow("Long break after", value: $sessionsUntilLongBreak, range: 2...8, unit: "sessions")
+            } header: {
+                Text("Durations")
+            } footer: {
+                Text("A new length applies the next time a phase starts.")
+            }
+            .disabled(!enabled)
+
+            Section {
+                Defaults.Toggle(key: .pomodoroAutoStartBreaks) {
+                    Text("Start breaks automatically")
+                }
+                Defaults.Toggle(key: .pomodoroAutoStartFocus) {
+                    Text("Start focus sessions automatically")
+                }
+                Defaults.Toggle(key: .pomodoroShowInClosedNotch) {
+                    Text("Show countdown in closed notch")
+                }
+            } header: {
+                Text("Behavior")
+            } footer: {
+                Text("While the timer runs, the closed-notch countdown takes the place of the music live activity.")
+            }
+            .disabled(!enabled)
+
+            Section {
+                Picker("Sound when a phase ends", selection: $sound) {
+                    ForEach(PomodoroSound.allCases) { sound in
+                        Text(LocalizedStringKey(sound.rawValue)).tag(sound)
+                    }
+                }
+                .onChange(of: sound) { _, newSound in
+                    newSound.play()
+                }
+                Toggle("Show macOS notification", isOn: $notifications)
+                    .onChange(of: notifications) { _, isOn in
+                        if isOn {
+                            PomodoroManager.shared.requestNotificationPermission()
+                        }
+                    }
+            } header: {
+                Text("Feedback")
+            } footer: {
+                Text("Haptic feedback follows the haptics setting in General. A shortcut to start or pause the timer can be set in Shortcuts.")
+            }
+            .disabled(!enabled)
+        }
+        .accentColor(.effectiveAccent)
+        .navigationTitle("Focus")
+    }
+
+    private func stepperRow(_ title: LocalizedStringKey, value: Binding<Int>, range: ClosedRange<Int>, unit: LocalizedStringKey) -> some View {
+        Stepper(value: value, in: range) {
+            HStack {
+                Text(title)
+                Spacer()
+                Text("\(value.wrappedValue)")
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                Text(unit)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 }
 
@@ -1857,6 +1951,11 @@ struct Shortcuts: View {
             }
             Section {
                 KeyboardShortcuts.Recorder("Toggle Notch Open:", name: .toggleNotchOpen)
+            }
+            Section {
+                KeyboardShortcuts.Recorder("Start or pause timer:", name: .togglePomodoro)
+            } header: {
+                Text("Focus")
             }
         }
         .accentColor(.effectiveAccent)

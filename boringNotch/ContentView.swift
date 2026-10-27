@@ -23,6 +23,7 @@ struct ContentView: View {
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
+    @ObservedObject var pomodoro = PomodoroManager.shared
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
     @State private var anyDropDebounceTask: Task<Void, Never>?
@@ -36,6 +37,8 @@ struct ContentView: View {
     @Default(.useMusicVisualizer) var useMusicVisualizer
 
     @Default(.showNotHumanFace) var showNotHumanFace
+    @Default(.pomodoroEnabled) var pomodoroEnabled
+    @Default(.pomodoroShowInClosedNotch) var pomodoroShowInClosedNotch
 
     // Shared interactive spring for movement/resizing to avoid conflicting animations
     private let animationSpring = Animation.interactiveSpring(response: 0.38, dampingFraction: 0.8, blendDuration: 0)
@@ -69,6 +72,12 @@ struct ContentView: View {
             && vm.notchState == .closed
         {
             chinWidth = 640
+        } else if coordinator.expandingView.type == .focus && coordinator.expandingView.show
+            && vm.notchState == .closed
+        {
+            chinWidth = 640
+        } else if showFocusLiveActivity {
+            chinWidth += (2 * focusLiveActivitySideWidth + 20)
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
             && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle)
             && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
@@ -82,6 +91,14 @@ struct ContentView: View {
         }
 
         return chinWidth
+    }
+
+    /// A running or paused focus timer takes the closed notch over from the music activity.
+    private var showFocusLiveActivity: Bool {
+        let inlineHUDShowing = coordinator.sneakPeek.show && Defaults[.inlineHUD]
+            && coordinator.sneakPeek.type != .music && coordinator.sneakPeek.type != .battery
+        return vm.notchState == .closed && !vm.hideOnClosed && !coordinator.expandingView.show
+            && !inlineHUDShowing && pomodoro.isActive && pomodoroEnabled && pomodoroShowInClosedNotch
     }
 
     /// The line for the strip under the closed notch; nil hides the strip (also during instrumental breaks).
@@ -300,8 +317,16 @@ struct ContentView: View {
                       {
                           AIUsageWarningView(closedNotchWidth: vm.closedNotchSize.width)
                               .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
+                      } else if coordinator.expandingView.type == .focus && coordinator.expandingView.show
+                                  && vm.notchState == .closed
+                      {
+                          FocusFinishedBanner(closedNotchWidth: vm.closedNotchSize.width)
+                              .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
                       } else if coordinator.sneakPeek.show && Defaults[.inlineHUD] && (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && vm.notchState == .closed {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
+                              .transition(.opacity)
+                      } else if showFocusLiveActivity {
+                          FocusLiveActivity()
                               .transition(.opacity)
                       } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed {
                           VStack(spacing: 0) {
@@ -375,6 +400,8 @@ struct ContentView: View {
                         ShelfView()
                     case .usage:
                         NotchUsageView()
+                    case .focus:
+                        NotchFocusView()
                     }
                 }
                 .transition(
