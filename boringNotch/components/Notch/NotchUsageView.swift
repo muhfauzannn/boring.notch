@@ -18,12 +18,15 @@ struct NotchUsageView: View {
                 UsageCard(service: service, state: usageManager.state(for: service))
             }
         }
-        // A fixed height, like the lyrics panel: a view that stretches to fill the notch makes
-        // the tab switch resize the outgoing view, and a card that changes height between
-        // "Loading" and loaded makes the content jump.
+        // Cards keep one height whether they say "Loading", show an error or show numbers, so the
+        // content doesn't jump when the first fetch lands.
         .frame(maxWidth: .infinity, alignment: .top)
         .frame(height: 134, alignment: .top)
-        .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))
+        // Then fill the same area as Home and Lyrics, top-aligned, so the header doesn't shift
+        // between tabs, and fade like they do.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.top, 2)
+        .transition(.opacity)
         .blur(radius: vm.notchState == .closed ? 30 : 0)
         .task {
             await usageManager.refreshIfStale()
