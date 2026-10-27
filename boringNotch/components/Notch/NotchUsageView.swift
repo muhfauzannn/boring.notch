@@ -18,12 +18,18 @@ struct NotchUsageView: View {
                 UsageCard(service: service, state: usageManager.state(for: service))
             }
         }
+        // Cards keep one height whether they say "Loading", show an error or show numbers, so the
+        // content doesn't jump when the first fetch lands.
+        .frame(maxWidth: .infinity, alignment: .top)
+        .frame(height: 134, alignment: .top)
+        // Then fill the same area as Home and Lyrics, top-aligned, so the header doesn't shift
+        // between tabs, and fade like they do.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.top, 2)
         .transition(.opacity)
         .blur(radius: vm.notchState == .closed ? 30 : 0)
         .task {
-            await usageManager.refresh()
+            await usageManager.refreshIfStale()
         }
     }
 }
@@ -63,7 +69,7 @@ struct UsageCard: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(RoundedRectangle(cornerRadius: MusicPlayerImageSizes.cornerRadiusInset.opened).fill(.white.opacity(0.05)))
     }
 
