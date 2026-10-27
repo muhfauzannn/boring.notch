@@ -74,6 +74,7 @@ final class ClipboardHistoryViewModel: ObservableObject {
                     if change.newValue {
                         self.scheduleSave()
                     } else {
+                        self.saveTask?.cancel()
                         self.storage.deleteSavedHistory()
                     }
                 }
@@ -84,9 +85,13 @@ final class ClipboardHistoryViewModel: ObservableObject {
         NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)
             .sink { [weak self] _ in
                 MainActor.assumeIsolated {
-                    guard let self, Defaults[.clipboardSaveToDisk] else { return }
+                    guard let self else { return }
                     self.saveTask?.cancel()
-                    self.storage.save(self.items, synchronously: true)
+                    if Defaults[.clipboardSaveToDisk] {
+                        self.storage.save(self.items, synchronously: true)
+                    } else {
+                        self.storage.removeAllImages()
+                    }
                 }
             }
             .store(in: &cancellables)
@@ -152,7 +157,8 @@ final class ClipboardHistoryViewModel: ObservableObject {
                 let stored = await Task.detached(priority: .userInitiated) {
                     storage.storeImage(data)
                 }.value
-                guard let stored else { return }
+                // Recording may have been paused or turned off while the image was saved
+                guard let stored, self.isMonitoring else { return }
                 self.record(.image(fileName: stored.fileName, pixelSize: stored.pixelSize), source: source)
             }
         }
@@ -167,7 +173,7 @@ final class ClipboardHistoryViewModel: ObservableObject {
 
         var updated = items
         // Copying the same thing again moves it to the front instead of adding a second card
-        if let index = updated.firstIndex(where: { $0.identityKey == item.identityKey }) {
+        if let index = updated.firstIndex(where: { $0.hasSameContent(as: item) }) {
             var existing = updated.remove(at: index)
             existing.content = content
             existing.lastCopiedAt = item.lastCopiedAt
@@ -189,7 +195,11 @@ final class ClipboardHistoryViewModel: ObservableObject {
     // MARK: - Actions
 
     func copy(_ item: ClipboardItem, plainTextOnly: Bool = false) {
-        lastChangeCount = ClipboardPasteboard.write(item, plainTextOnly: plainTextOnly)
+        guard let changeCount = ClipboardPasteboard.write(item, plainTextOnly: plainTextOnly) else {
+            NSSound.beep()
+            return
+        }
+        lastChangeCount = changeCount
 
         // Cards stay where they are, so the one just clicked doesn't jump away
         if let index = items.firstIndex(where: { $0.id == item.id }) {
@@ -307,7 +317,7 @@ final class ClipboardHistoryViewModel: ObservableObject {
         saveTask?.cancel()
         saveTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(500))
-            guard !Task.isCancelled, let self else { return }
+            guard !Task.isCancelled, let self, Defaults[.clipboardSaveToDisk] else { return }
             self.storage.save(self.items)
         }
     }

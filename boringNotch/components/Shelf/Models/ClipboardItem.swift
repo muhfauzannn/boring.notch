@@ -46,17 +46,19 @@ struct ClipboardItem: Identifiable, Codable, Equatable, Sendable {
         self.sourceAppName = sourceAppName
     }
 
-    /// Two copies with the same key are the same entry.
-    var identityKey: String {
-        switch content {
-        case .text(let string, _):
-            return "text:" + string
-        case .link(let url):
-            return "link:" + url.absoluteString
-        case .image(let fileName, _):
-            return "image:" + fileName
-        case .files(let urls):
-            return "files:" + urls.map(\.standardizedFileURL.path).joined(separator: "\n")
+    /// Copying the same thing again is the same entry, whatever its formatting.
+    func hasSameContent(as other: ClipboardItem) -> Bool {
+        switch (content, other.content) {
+        case (.text(let a, _), .text(let b, _)):
+            return a == b
+        case (.link(let a), .link(let b)):
+            return a == b
+        case (.image(let a, _), .image(let b, _)):
+            return a == b
+        case (.files(let a), .files(let b)):
+            return a.map(\.standardizedFileURL) == b.map(\.standardizedFileURL)
+        default:
+            return false
         }
     }
 
@@ -79,7 +81,8 @@ struct ClipboardItem: Identifiable, Codable, Equatable, Sendable {
         return false
     }
 
-    /// A "#RGB" or "#RRGGBB" string gets a swatch.
+    /// A "#RGB" or "#RRGGBB" string gets a swatch. Hex-looking words like "#bad" or "#decade"
+    /// need a digit (or one repeated letter, like "#fff") to count.
     var hexColor: Color? {
         guard case .text(let string, _) = content else { return nil }
         return Self.color(fromHex: string.trimmingCharacters(in: .whitespacesAndNewlines))
@@ -101,7 +104,8 @@ struct ClipboardItem: Identifiable, Codable, Equatable, Sendable {
         guard string.hasPrefix("#") else { return nil }
         var hex = String(string.dropFirst())
         guard hex.count == 3 || hex.count == 6,
-              hex.allSatisfy(\.isHexDigit) else { return nil }
+              hex.allSatisfy(\.isHexDigit),
+              hex.contains(where: \.isNumber) || Set(hex.lowercased()).count == 1 else { return nil }
         if hex.count == 3 {
             hex = hex.map { "\($0)\($0)" }.joined()
         }

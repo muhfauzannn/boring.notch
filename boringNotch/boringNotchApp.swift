@@ -204,17 +204,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard viewModel.notchState == .closed else { return }
         viewModel.open()
 
-        // Close again if the pointer never comes to the notch; once it does, hovering takes over
+        // Close again if the pointer doesn't come to the notch; once it does, hovering takes over
         let window = Defaults[.showOnAllDisplays] ? viewModel.screenUUID.flatMap { windows[$0] } : self.window
         closeNotchTask = Task { @MainActor [weak viewModel, weak window] in
-            try? await Task.sleep(for: .seconds(4))
+            let deadline = Date().addingTimeInterval(4)
             while !Task.isCancelled {
                 guard let viewModel, viewModel.notchState == .open else { return }
-                guard let frame = window?.frame, frame.contains(NSEvent.mouseLocation) else {
+                if let frame = window?.frame, frame.contains(NSEvent.mouseLocation) { return }
+                if Date() >= deadline {
                     viewModel.close()
                     return
                 }
-                try? await Task.sleep(for: .seconds(1))
+                try? await Task.sleep(for: .milliseconds(250))
             }
         }
     }
@@ -272,9 +273,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if Defaults[.showOnAllDisplays], let viewModel = viewModels[uuid] {
             viewModel.open()
             coordinator.currentView = .shelf
+            coordinator.shelfMode = .files
         } else if !Defaults[.showOnAllDisplays], let windowScreen = window?.screen, screen == windowScreen {
             vm.open()
             coordinator.currentView = .shelf
+            coordinator.shelfMode = .files
         }
     }
 

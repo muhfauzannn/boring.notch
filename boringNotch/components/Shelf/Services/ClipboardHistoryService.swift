@@ -75,9 +75,15 @@ enum ClipboardPasteboard {
         return nil
     }
 
-    /// Puts an item back on the pasteboard. Returns the new change count, so it can be skipped.
-    @discardableResult
-    static func write(_ item: ClipboardItem, plainTextOnly: Bool = false) -> Int {
+    /// Puts an item back on the pasteboard. Returns the new change count, so it can be skipped,
+    /// or nil when the item can't be copied (an image whose file is gone), leaving the pasteboard alone.
+    static func write(_ item: ClipboardItem, plainTextOnly: Bool = false) -> Int? {
+        var imageData: Data?
+        if !plainTextOnly, case .image(let fileName, _) = item.content {
+            imageData = try? Data(contentsOf: ClipboardStorageService.shared.imageURL(for: fileName))
+            guard imageData != nil else { return nil }
+        }
+
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
 
@@ -91,9 +97,8 @@ enum ClipboardPasteboard {
             case .link(let url):
                 pasteboard.writeObjects([url as NSURL])
                 pasteboard.setString(url.absoluteString, forType: .string)
-            case .image(let fileName, _):
-                let url = ClipboardStorageService.shared.imageURL(for: fileName)
-                if let png = try? Data(contentsOf: url) {
+            case .image:
+                if let png = imageData {
                     pasteboard.setData(png, forType: .png)
                     if let tiff = NSImage(data: png)?.tiffRepresentation {
                         pasteboard.setData(tiff, forType: .tiff)
@@ -173,13 +178,14 @@ final class ClipboardStorageService: @unchecked Sendable {
         }
     }
 
-    /// Encodes now and writes in the background, so a burst of copies doesn't stall the UI.
+    /// Encodes and writes in the background, so a burst of copies doesn't stall the UI.
     /// Waits for the write when the app is quitting.
     func save(_ items: [ClipboardItem], synchronously: Bool = false) {
-        guard let data = try? encoder.encode(items) else { return }
         let url = itemsURL
+        let encoder = encoder
         let write = {
             do {
+                let data = try encoder.encode(items)
                 try data.write(to: url, options: .atomic)
             } catch {
                 print("Failed to save clipboard history: \(error.localizedDescription)")
@@ -201,7 +207,10 @@ final class ClipboardStorageService: @unchecked Sendable {
         let hash = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         let fileName = String(hash.prefix(32)) + ".png"
         let url = imageURL(for: fileName)
-        if !FileManager.default.fileExists(atPath: url.path) {
+        if FileManager.default.fileExists(atPath: url.path) {
+            // Fresh date, so a cleanup that's already queued leaves it alone (see removeImages)
+            try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: url.path)
+        } else {
             do {
                 try png.write(to: url, options: .atomic)
             } catch {
@@ -228,11 +237,22 @@ final class ClipboardStorageService: @unchecked Sendable {
         }
     }
 
-    /// Used when "Save history on disk" is turned off.
+    /// Used when "Keep history after quitting" is turned off.
     func deleteSavedHistory() {
         let url = itemsURL
         queue.async {
             try? FileManager.default.removeItem(at: url)
+        }
+    }
+
+    /// Images are files even when the history isn't kept, so they go when the app quits.
+    func removeAllImages() {
+        let dir = imagesDirectory
+        queue.sync {
+            let files = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
+            for file in files {
+                try? FileManager.default.removeItem(at: file)
+            }
         }
     }
 }
