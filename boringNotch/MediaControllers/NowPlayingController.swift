@@ -81,6 +81,8 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
     /// Direct controller for the held app when it has an AppleScript interface
     private var heldSourceController: (any MediaControllerProtocol)?
     private var heldSourceCancellable: AnyCancellable?
+    /// What the held app last said about itself; nil until it first answers
+    private var heldSourceIsPlaying: Bool?
     private var appTerminationCancellable: AnyCancellable?
 
     // MARK: - Initialization
@@ -304,9 +306,9 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
         }
 
         if let artworkDataString = payload.artworkData {
-            newPlaybackState.artwork = Data(
-                base64Encoded: artworkDataString.trimmingCharacters(in: .whitespacesAndNewlines)
-            )
+            // Some sessions (e.g. Safari tabs) send empty artwork; treat it as none rather than zero-byte image data
+            let artwork = Data(base64Encoded: artworkDataString.trimmingCharacters(in: .whitespacesAndNewlines))
+            newPlaybackState.artwork = artwork?.isEmpty == false ? artwork : nil
         } else if !diff {
             newPlaybackState.artwork = nil
         }
@@ -332,7 +334,9 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
         
         reportedState = newPlaybackState
 
-        if shouldHoldCurrentSource(over: newPlaybackState) {
+        let hold = shouldHoldCurrentSource(over: newPlaybackState)
+        NSLog("[NowPlaying] update from \(newPlaybackState.bundleIdentifier.isEmpty ? "<none>" : newPlaybackState.bundleIdentifier) playing=\(newPlaybackState.isPlaying) title=\"\(newPlaybackState.title)\" diff=\(diff) shown=\(playbackState.bundleIdentifier) -> \(hold ? "keep shown app" : "show update")")
+        if hold {
             startHoldingSource()
             return
         }
@@ -343,16 +347,31 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
         // await fetchFavoriteStateIfSupported()
     }
     
+    private static let directlyFollowableApps: Set<String> = ["com.spotify.client", "com.apple.Music"]
+
     /// Whether an update from another app should be ignored because the shown app is still playing.
-    /// A real switch (the other app actually playing something) is always let through.
     private func shouldHoldCurrentSource(over incoming: PlaybackState) -> Bool {
         let shown = playbackState
         guard !shown.bundleIdentifier.isEmpty,
               incoming.bundleIdentifier != shown.bundleIdentifier,
-              shown.isPlaying || isHoldingSource,
-              !incoming.isPlaying || incoming.title.isEmpty
+              !NSRunningApplication.runningApplications(withBundleIdentifier: shown.bundleIdentifier).isEmpty
         else { return false }
-        return !NSRunningApplication.runningApplications(withBundleIdentifier: shown.bundleIdentifier).isEmpty
+
+        let incomingIsRealPlayback = incoming.isPlaying && !incoming.title.isEmpty
+
+        if Self.directlyFollowableApps.contains(shown.bundleIdentifier) {
+            // Spotify/Music can be asked directly whether they are still playing, so keep them while they are,
+            // even if the other app briefly reports playing (Safari tabs do this around notifications).
+            // The held controller releases the hold once the app itself reports it stopped.
+            if isHoldingSource {
+                return heldSourceIsPlaying != false || !incomingIsRealPlayback
+            }
+            // A paused Spotify/Music is still a better thing to show than another app's idle session
+            return shown.isPlaying || !incomingIsRealPlayback
+        }
+
+        // Other apps can't be checked, so only ignore sessions that aren't actually playing anything
+        return (shown.isPlaying || isHoldingSource) && !incomingIsRealPlayback
     }
 
     private func startHoldingSource() {
@@ -367,12 +386,24 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
         default: controller = nil
         }
         heldSourceController = controller
+        heldSourceIsPlaying = nil
         heldSourceCancellable = controller?.playbackStatePublisher
             .dropFirst() // the placeholder state the controller starts with
             .sink { [weak self] state in
                 guard let self, self.isHoldingSource else { return }
+                self.heldSourceIsPlaying = state.isPlaying
+                let reported = self.reportedState
+                if !state.isPlaying, reported.isPlaying, !reported.title.isEmpty,
+                   reported.bundleIdentifier != state.bundleIdentifier {
+                    // The held app stopped while another app is really playing: show that one
+                    NSLog("[NowPlaying] \(state.bundleIdentifier) stopped, switching to \(reported.bundleIdentifier)")
+                    self.stopHoldingSource()
+                    self.playbackState = reported
+                    return
+                }
                 self.playbackState = state
             }
+        NSLog("[NowPlaying] holding \(playbackState.bundleIdentifier) (followed directly: \(controller != nil))")
     }
 
     private func stopHoldingSource() {
@@ -380,6 +411,8 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
         isHoldingSource = false
         heldSourceCancellable = nil
         heldSourceController = nil
+        heldSourceIsPlaying = nil
+        NSLog("[NowPlaying] released hold")
     }
 
     /// When the held app quits, show whatever MediaRemote reported meanwhile
