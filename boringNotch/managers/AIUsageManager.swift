@@ -65,6 +65,18 @@ final class AIUsageManager: ObservableObject {
         }
     }
 
+    /// For opening the tab: skip the network round trip (and the redraw it causes mid-transition)
+    /// when every service already has numbers from the last minute.
+    func refreshIfStale(maxAge: TimeInterval = 60) async {
+        let fresh = enabledServices.allSatisfy { service in
+            if case .loaded(let snapshot) = state(for: service) {
+                return Date().timeIntervalSince(snapshot.updatedAt) < maxAge
+            }
+            return false
+        }
+        if !fresh { await refresh() }
+    }
+
     func refresh() async {
         await withTaskGroup(of: Void.self) { group in
             for service in enabledServices {

@@ -18,12 +18,15 @@ struct NotchUsageView: View {
                 UsageCard(service: service, state: usageManager.state(for: service))
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.top, 2)
+        // A fixed height, like the lyrics panel: a view that stretches to fill the notch makes
+        // the tab switch resize the outgoing view, and a card that changes height between
+        // "Loading" and loaded makes the content jump.
+        .frame(maxWidth: .infinity, alignment: .top)
+        .frame(height: 134, alignment: .top)
         .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))
         .blur(radius: vm.notchState == .closed ? 30 : 0)
         .task {
-            await usageManager.refresh()
+            await usageManager.refreshIfStale()
         }
     }
 }
@@ -63,7 +66,7 @@ struct UsageCard: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(RoundedRectangle(cornerRadius: MusicPlayerImageSizes.cornerRadiusInset.opened).fill(.white.opacity(0.05)))
     }
 
