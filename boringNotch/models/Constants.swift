@@ -187,6 +187,19 @@ extension Defaults.Keys {
     static let aiUsageWarnThreshold = Key<Double>("aiUsageWarnThreshold", default: 80)
     static let showAIUsageWarnings = Key<Bool>("showAIUsageWarnings", default: true)
 
+    // MARK: Focus timer
+    static let pomodoroEnabled = Key<Bool>("pomodoroEnabled", default: true)
+    static let pomodoroFocusMinutes = Key<Int>("pomodoroFocusMinutes", default: 25)
+    static let pomodoroShortBreakMinutes = Key<Int>("pomodoroShortBreakMinutes", default: 5)
+    static let pomodoroLongBreakMinutes = Key<Int>("pomodoroLongBreakMinutes", default: 15)
+    static let pomodoroSessionsUntilLongBreak = Key<Int>("pomodoroSessionsUntilLongBreak", default: 4)
+    static let pomodoroAutoStartBreaks = Key<Bool>("pomodoroAutoStartBreaks", default: true)
+    static let pomodoroAutoStartFocus = Key<Bool>("pomodoroAutoStartFocus", default: false)
+    static let pomodoroSound = Key<PomodoroSound>("pomodoroSound", default: .glass)
+    static let pomodoroNotifications = Key<Bool>("pomodoroNotifications", default: false)
+    static let pomodoroShowInClosedNotch = Key<Bool>("pomodoroShowInClosedNotch", default: true)
+    static let pomodoroSnapshot = Key<PomodoroSnapshot>("pomodoroSnapshot", default: PomodoroSnapshot())
+
     // MARK: Fullscreen Media Detection
     static let hideNotchOption = Key<HideNotchOption>("hideNotchOption", default: .nowPlayingOnly)
     

@@ -284,6 +284,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Start AI usage polling so closed-notch warnings work before the Usage tab is opened
         Task { @MainActor in
             _ = AIUsageManager.shared
+            // Restores a running focus timer and schedules its end
+            _ = PomodoroManager.shared
         }
 
         NotificationCenter.default.addObserver(
@@ -367,6 +369,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     type: .music,
                     duration: 3.0
                 )
+            }
+        }
+
+        KeyboardShortcuts.onKeyDown(for: .togglePomodoro) {
+            Task { @MainActor in
+                guard Defaults[.pomodoroEnabled] else { return }
+                withAnimation(.smooth) {
+                    PomodoroManager.shared.toggle()
+                }
             }
         }
 

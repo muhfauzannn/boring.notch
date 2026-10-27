@@ -18,7 +18,8 @@ struct TabModel: Identifiable {
 let tabs = [
     TabModel(label: "Home", icon: "house.fill", view: .home),
     TabModel(label: "Shelf", icon: "tray.fill", view: .shelf),
-    TabModel(label: "Usage", icon: "sparkles", view: .usage)
+    TabModel(label: "Usage", icon: "sparkles", view: .usage),
+    TabModel(label: "Focus", icon: "timer", view: .focus)
 ]
 
 struct TabSelectionView: View {
@@ -26,6 +27,8 @@ struct TabSelectionView: View {
     @Default(.boringShelf) var boringShelf
     @Default(.showClaudeUsage) var showClaudeUsage
     @Default(.showChatGPTUsage) var showChatGPTUsage
+    @Default(.pomodoroEnabled) var pomodoroEnabled
+    @ObservedObject var pomodoro = PomodoroManager.shared
     @Namespace var animation
 
     private var visibleTabs: [TabModel] {
@@ -33,6 +36,7 @@ struct TabSelectionView: View {
             switch tab.view {
             case .shelf: return boringShelf
             case .usage: return showClaudeUsage || showChatGPTUsage
+            case .focus: return pomodoroEnabled
             case .home: return true
             }
         }
@@ -44,6 +48,12 @@ struct TabSelectionView: View {
                     TabButton(label: tab.label, icon: tab.icon, selected: coordinator.currentView == tab.view) {
                         withAnimation(.smooth) {
                             coordinator.currentView = tab.view
+                        }
+                    } accessory: {
+                        // Keep the countdown in sight from the other tabs
+                        if tab.view == .focus && pomodoro.isActive && coordinator.currentView != .focus {
+                            FocusTabBadge()
+                                .transition(.opacity)
                         }
                     }
                     .frame(height: 26)

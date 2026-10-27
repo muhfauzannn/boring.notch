@@ -23,6 +23,7 @@ struct ContentView: View {
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
+    @ObservedObject var pomodoro = PomodoroManager.shared
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
     @State private var anyDropDebounceTask: Task<Void, Never>?
@@ -69,6 +70,12 @@ struct ContentView: View {
             && vm.notchState == .closed
         {
             chinWidth = 640
+        } else if coordinator.expandingView.type == .focus && coordinator.expandingView.show
+            && vm.notchState == .closed
+        {
+            chinWidth = 640
+        } else if showFocusLiveActivity {
+            chinWidth += (2 * focusLiveActivitySideWidth + 20)
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
             && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle)
             && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
@@ -82,6 +89,12 @@ struct ContentView: View {
         }
 
         return chinWidth
+    }
+
+    /// A running or paused focus timer takes the closed notch over from the music activity.
+    private var showFocusLiveActivity: Bool {
+        vm.notchState == .closed && !vm.hideOnClosed && !coordinator.expandingView.show
+            && pomodoro.isActive && Defaults[.pomodoroEnabled] && Defaults[.pomodoroShowInClosedNotch]
     }
 
     /// The line for the strip under the closed notch; nil hides the strip (also during instrumental breaks).
@@ -300,8 +313,16 @@ struct ContentView: View {
                       {
                           AIUsageWarningView(closedNotchWidth: vm.closedNotchSize.width)
                               .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
+                      } else if coordinator.expandingView.type == .focus && coordinator.expandingView.show
+                                  && vm.notchState == .closed
+                      {
+                          FocusFinishedBanner(closedNotchWidth: vm.closedNotchSize.width)
+                              .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
                       } else if coordinator.sneakPeek.show && Defaults[.inlineHUD] && (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && vm.notchState == .closed {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
+                              .transition(.opacity)
+                      } else if showFocusLiveActivity {
+                          FocusLiveActivity()
                               .transition(.opacity)
                       } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed {
                           VStack(spacing: 0) {
@@ -375,6 +396,8 @@ struct ContentView: View {
                         ShelfView()
                     case .usage:
                         NotchUsageView()
+                    case .focus:
+                        NotchFocusView()
                     }
                 }
                 .transition(
