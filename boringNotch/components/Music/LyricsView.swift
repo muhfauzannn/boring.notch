@@ -65,9 +65,9 @@ struct NotchLyricsView: View {
                 .frame(maxWidth: .infinity)
         }
         .padding(.top, 2)
-        // Fixed like the calendar box, so the tab never grows into the header or past the notch's rounded bottom
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .frame(height: 130, alignment: .top)
+        // Fill the tab area exactly like Home does, so the header doesn't shift when switching tabs
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .clipped()
     }
 }
 
@@ -169,7 +169,8 @@ struct SyncedLyricsScroller: View {
     @ObservedObject private var musicManager = MusicManager.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var heights: [Int: CGFloat] = [:]
-    @State private var shownIndex: Int = 0
+    // Start on the current line so opening the tab doesn't scroll in from the top
+    @State private var shownIndex: Int = MusicManager.shared.currentLyricIndex ?? 0
     @State private var jump: Int = 1
     @State private var hoveredID: Int?
 
@@ -194,9 +195,23 @@ struct SyncedLyricsScroller: View {
             .frame(width: geo.size.width, height: geo.size.height)
         }
         .mask(LyricsEdgeFade())
-        .onPreferenceChange(LyricHeightsKey.self) { heights = $0 }
+        // Hidden until the lines are measured, then faded in, so they don't jump into place
+        .opacity(heights.isEmpty ? 0 : 1)
+        .animation(.easeOut(duration: 0.25), value: heights.isEmpty)
+        .onPreferenceChange(LyricHeightsKey.self) { newHeights in
+            // Measurements are layout, not motion: never animate them (e.g. inside a tab switch)
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                heights = newHeights
+            }
+        }
         .onAppear {
-            shownIndex = musicManager.currentLyricIndex ?? 0
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                shownIndex = musicManager.currentLyricIndex ?? 0
+            }
         }
         .onChange(of: musicManager.currentLyricIndex) { _, newValue in
             let target = newValue ?? 0
