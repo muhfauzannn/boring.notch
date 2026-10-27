@@ -74,7 +74,7 @@ extension BoringNotchXPCHelper {
         var unreadable = false
 
         func lookup(in keychain: String?) -> [String: Any]? {
-            for account in [NSUserName(), nil] as [String?] {
+            for account in [nil, NSUserName()] as [String?] {
                 var arguments = ["find-generic-password", "-s", "Claude Code-credentials"]
                 if let account { arguments += ["-a", account] }
                 arguments.append("-w")
@@ -122,6 +122,7 @@ extension BoringNotchXPCHelper {
         process.environment = environment
         let stdout = Pipe()
         let stderr = Pipe()
+        process.standardInput = FileHandle.nullDevice
         process.standardOutput = stdout
         process.standardError = stderr
 
