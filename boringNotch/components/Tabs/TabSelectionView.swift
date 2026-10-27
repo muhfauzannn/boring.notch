@@ -18,7 +18,8 @@ struct TabModel: Identifiable {
 let tabs = [
     TabModel(label: "Home", icon: "house.fill", view: .home),
     TabModel(label: "Shelf", icon: "tray.fill", view: .shelf),
-    TabModel(label: "Usage", icon: "sparkles", view: .usage)
+    TabModel(label: "Usage", icon: "sparkles", view: .usage),
+    TabModel(label: "Lyrics", icon: "quote.bubble.fill", view: .lyrics)
 ]
 
 struct TabSelectionView: View {
@@ -26,6 +27,7 @@ struct TabSelectionView: View {
     @Default(.boringShelf) var boringShelf
     @Default(.showClaudeUsage) var showClaudeUsage
     @Default(.showChatGPTUsage) var showChatGPTUsage
+    @Default(.showLyricsPanel) var showLyricsPanel
     @Namespace var animation
 
     private var visibleTabs: [TabModel] {
@@ -33,6 +35,7 @@ struct TabSelectionView: View {
             switch tab.view {
             case .shelf: return boringShelf
             case .usage: return showClaudeUsage || showChatGPTUsage
+            case .lyrics: return showLyricsPanel
             case .home: return true
             }
         }

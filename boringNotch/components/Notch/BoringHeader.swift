@@ -13,10 +13,11 @@ struct BoringHeader: View {
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @StateObject var tvm = ShelfStateViewModel.shared
+    @Default(.showLyricsPanel) var showLyricsTab
     var body: some View {
         HStack(spacing: 0) {
             HStack {
-                if ((!tvm.isEmpty || coordinator.alwaysShowTabs) && Defaults[.boringShelf]) || AIUsageManager.shared.isEnabled {
+                if ((!tvm.isEmpty || coordinator.alwaysShowTabs) && Defaults[.boringShelf]) || AIUsageManager.shared.isEnabled || showLyricsTab {
                     TabSelectionView()
                 } else if vm.notchState == .open {
                     EmptyView()

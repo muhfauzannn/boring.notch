@@ -153,7 +153,7 @@ struct MusicControlsView: View {
                 frameWidth: width
             )
             .fontWeight(.medium)
-            if Defaults[.enableLyrics] && !Defaults[.showLyricsPanel] {
+            if Defaults[.enableLyrics] {
                 TimelineView(.animation(minimumInterval: 0.25)) { timeline in
                     let currentElapsed: Double = {
                         guard musicManager.isPlaying else { return musicManager.elapsedTime }
@@ -425,7 +425,6 @@ struct NotchHomeView: View {
     @ObservedObject var webcamManager = WebcamManager.shared
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var coordinator = BoringViewCoordinator.shared
-    @Default(.showLyricsPanel) private var showLyricsPanel
     let albumArtNamespace: Namespace.ID
 
     var body: some View {
@@ -446,12 +445,7 @@ struct NotchHomeView: View {
         HStack(alignment: .top, spacing: (shouldShowCamera && Defaults[.showCalendar]) ? 10 : 15) {
             MusicPlayerView(albumArtNamespace: albumArtNamespace)
 
-            if showLyricsPanel {
-                // Same box as the calendar, so the panel lines up with the album art and stays below the header
-                LyricsPanelView()
-                    .frame(width: shouldShowCamera ? 220 : 280, height: 120)
-                    .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .leading)))
-            } else if Defaults[.showCalendar] {
+            if Defaults[.showCalendar] {
                 CalendarView()
                     .frame(width: shouldShowCamera ? 170 : 215)
                     .onHover { isHovering in
