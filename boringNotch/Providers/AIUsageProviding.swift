@@ -171,8 +171,11 @@ enum AIUsageParser {
         case "notSignedIn": return service.signInHint
         case "expired": return "Sign-in expired. Open \(service == .claude ? "Claude Code" : "Codex") to refresh it"
         case "helperUnavailable": return "Helper unavailable"
+        case "noAccountLogin": return "Claude Code uses an API key, which has no plan limits"
+        case "credentialsUnreadable": return "Couldn't read the Claude Code sign-in"
         case "badResponse": return "Unexpected response"
         default:
+            if error.hasPrefix("keychain:") { return "Keychain access failed (\(error.dropFirst(9))). Unlock your Keychain and retry" }
             if error.hasPrefix("http:429") { return "Rate limited, will retry" }
             if error.hasPrefix("http:") { return "Request failed (\(error.dropFirst(5)))" }
             if error.hasPrefix("network:") { return "Offline" }
