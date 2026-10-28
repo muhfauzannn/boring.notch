@@ -13,6 +13,7 @@ import LaunchAtLogin
 import Sparkle
 import SwiftUI
 import SwiftUIIntrospect
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @State private var selectedTab = "General"
@@ -792,6 +793,8 @@ struct Media: View {
 
     @Default(.enableLyrics) var enableLyrics
     @Default(.lyricsOffset) var lyricsOffset
+    @Default(.onlyShowMusicApps) var onlyShowMusicApps
+    @Default(.customMusicApps) var customMusicApps
 
     var body: some View {
         Form {
@@ -830,7 +833,40 @@ struct Media: View {
                     .font(.caption)
                 }
             }
-            
+
+            if mediaController == .nowPlaying {
+                Section {
+                    Toggle("Only show music apps", isOn: $onlyShowMusicApps)
+                    if onlyShowMusicApps {
+                        ForEach(customMusicApps, id: \.self) { bundleID in
+                            HStack {
+                                AppIcon(for: bundleID)
+                                    .resizable()
+                                    .frame(width: 18, height: 18)
+                                Text(appName(for: bundleID))
+                                Spacer()
+                                Button {
+                                    customMusicApps.removeAll { $0 == bundleID }
+                                } label: {
+                                    Image(systemName: "minus.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        Button("Add music app…", action: addMusicApp)
+                    }
+                } header: {
+                    Text("Now Playing sources")
+                } footer: {
+                    Text(
+                        "Browsers, videos and notification sounds won't take over the player. Spotify, Apple Music, YouTube Music, TIDAL, Deezer, Amazon Music and other common music apps are included; add any other app here."
+                    )
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
+                }
+            }
+
             Section {
                 Toggle(
                     "Show music live activity",
@@ -915,6 +951,29 @@ struct Media: View {
             return MediaControllerType.allCases.filter { $0 != .nowPlaying }
         } else {
             return MediaControllerType.allCases
+        }
+    }
+
+    private func appName(for bundleID: String) -> String {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            return bundleID
+        }
+        return FileManager.default.displayName(atPath: url.path)
+            .replacingOccurrences(of: ".app", with: "")
+    }
+
+    private func addMusicApp() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.application]
+        panel.allowsMultipleSelection = true
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        guard panel.runModal() == .OK else { return }
+        for url in panel.urls {
+            guard let bundleID = Bundle(url: url)?.bundleIdentifier,
+                  MusicApps.builtIn[bundleID] == nil,
+                  !customMusicApps.contains(bundleID)
+            else { continue }
+            customMusicApps.append(bundleID)
         }
     }
 }

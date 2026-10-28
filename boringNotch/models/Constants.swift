@@ -51,6 +51,31 @@ enum MediaControllerType: String, CaseIterable, Identifiable, Defaults.Serializa
     var id: String { self.rawValue }
 }
 
+/// Apps whose playback the Now Playing source shows when it is limited to music apps
+enum MusicApps {
+    static let builtIn: [String: String] = [
+        "com.spotify.client": "Spotify",
+        "com.apple.Music": "Apple Music",
+        "com.apple.iTunes": "iTunes",
+        "com.github.th-ch.youtube-music": "YouTube Music",
+        "com.tidal.desktop": "TIDAL",
+        "com.deezer.deezer-desktop": "Deezer",
+        "com.amazon.music": "Amazon Music",
+        "com.qobuz.QobuzDesktop": "Qobuz",
+        "sh.cider.genten.mac": "Cider",
+        "com.coppertino.Vox": "VOX",
+        "com.swinsian.Swinsian": "Swinsian",
+        "co.brushedtype.doppler-macos": "Doppler",
+        "tv.plex.plexamp": "Plexamp",
+        "com.foobar2000.mac": "foobar2000",
+    ]
+
+    static func isAllowed(_ bundleIdentifier: String) -> Bool {
+        guard Defaults[.onlyShowMusicApps] else { return true }
+        return builtIn[bundleIdentifier] != nil || Defaults[.customMusicApps].contains(bundleIdentifier)
+    }
+}
+
 // Sneak peek styles for selection in settings
 enum SneakPeekStyle: String, CaseIterable, Identifiable, Defaults.Serializable {
     case standard = "Default"
@@ -132,6 +157,8 @@ extension Defaults.Keys {
     static let showLyricsPanel = Key<Bool>("showLyricsPanel", default: false)
     static let showClosedLyrics = Key<Bool>("showClosedLyrics", default: false)
     static let lyricsOffset = Key<Double>("lyricsOffset", default: 0)
+    static let onlyShowMusicApps = Key<Bool>("onlyShowMusicApps", default: true)
+    static let customMusicApps = Key<[String]>("customMusicApps", default: [])
     static let musicControlSlots = Key<[MusicControlButton]>(
         "musicControlSlots",
         default: MusicControlButton.defaultLayout
