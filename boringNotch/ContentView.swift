@@ -248,6 +248,7 @@ struct ContentView: View {
             if isTargeted {
                 if vm.notchState == .closed {
                     coordinator.currentView = .shelf
+                    coordinator.shelfMode = .files
                     doOpen()
                 }
                 return

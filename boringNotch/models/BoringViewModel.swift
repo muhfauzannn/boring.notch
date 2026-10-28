@@ -213,6 +213,7 @@ class BoringViewModel: NSObject, ObservableObject {
         // Otherwise, if the user has not enabled openLastShelfByDefault, set the view to home
     if !ShelfStateViewModel.shared.isEmpty && Defaults[.openShelfByDefault] {
             coordinator.currentView = .shelf
+            coordinator.shelfMode = .files
         } else if !coordinator.openLastTabByDefault {
             coordinator.currentView = .home
         }

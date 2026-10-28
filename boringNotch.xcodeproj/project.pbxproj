@@ -150,6 +150,10 @@
 		F38DE6482D8243E7008B5C6D /* BatteryActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */; };
 		B7174FF53D21506DA686DCCF /* AIUsageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DFDE9B1F272786D61094245 /* AIUsageManager.swift */; };
 		AF6591507FAF003300CEF490 /* PomodoroManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B3EC368987936E74EA549E /* PomodoroManager.swift */; };
+		8CA716DCC04F0657863AE200 /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38963E8237D76E5003CC11C /* ClipboardItem.swift */; };
+		E8660F25CF71ED2333716629 /* ClipboardHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2EC651B4EEEF599B83626B /* ClipboardHistoryService.swift */; };
+		106AE37F0D8CB306C30B982A /* ClipboardHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ABB34E3534E3F3BAC22C6EB /* ClipboardHistoryViewModel.swift */; };
+		5116CB44EBE19AB5B9AEE546 /* ClipboardHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50179493FC7ECE5D6C9C9B80 /* ClipboardHistoryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -323,6 +327,10 @@
 		F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryActivityManager.swift; sourceTree = "<group>"; };
 		2DFDE9B1F272786D61094245 /* AIUsageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIUsageManager.swift; sourceTree = "<group>"; };
 		F6B3EC368987936E74EA549E /* PomodoroManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroManager.swift; sourceTree = "<group>"; };
+		F38963E8237D76E5003CC11C /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
+		CE2EC651B4EEEF599B83626B /* ClipboardHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistoryService.swift; sourceTree = "<group>"; };
+		2ABB34E3534E3F3BAC22C6EB /* ClipboardHistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistoryViewModel.swift; sourceTree = "<group>"; };
+		50179493FC7ECE5D6C9C9B80 /* ClipboardHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistoryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -374,6 +382,7 @@
 		1113ABB82E80E27000EC13B2 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F38963E8237D76E5003CC11C /* ClipboardItem.swift */,
 				118EBE2C2E97165600D54B5A /* Bookmark.swift */,
 				1113ABB72E80E27000EC13B2 /* ShelfItem.swift */,
 			);
@@ -383,6 +392,7 @@
 		1113ABBF2E80E27000EC13B2 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				CE2EC651B4EEEF599B83626B /* ClipboardHistoryService.swift */,
 				1194E87B2EA19E09009C82D6 /* ImageProcessingService.swift */,
 				118EBE282E946B3F00D54B5A /* ShareServiceFinder.swift */,
 				1100292D2E86940F00035A57 /* QuickShareService.swift */,
@@ -399,6 +409,7 @@
 		1113ABC22E80E27000EC13B2 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				2ABB34E3534E3F3BAC22C6EB /* ClipboardHistoryViewModel.swift */,
 				118EBE3A2E9720C500D54B5A /* ShelfStateViewModel.swift */,
 				11EFCD6F2E8E92D600D0B974 /* ShelfItemViewModel.swift */,
 				1113ABC02E80E27000EC13B2 /* ShelfSelectionModel.swift */,
@@ -409,6 +420,7 @@
 		1113ABC42E80E27000EC13B2 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				50179493FC7ECE5D6C9C9B80 /* ClipboardHistoryView.swift */,
 				11F747CD2EC75CEA00F841DB /* DragPreviewView.swift */,
 				110029292E8691B400035A57 /* FileShareView.swift */,
 				1113ABC32E80E27000EC13B2 /* ShelfItemView.swift */,
@@ -1019,6 +1031,10 @@
 				14CEF4162C5CAED300855D72 /* boringNotchApp.swift in Sources */,
 				B17266DF2C64DFA00031BA0D /* BundleInfos.swift in Sources */,
 				118EBE3B2E9720C500D54B5A /* ShelfStateViewModel.swift in Sources */,
+				5116CB44EBE19AB5B9AEE546 /* ClipboardHistoryView.swift in Sources */,
+				106AE37F0D8CB306C30B982A /* ClipboardHistoryViewModel.swift in Sources */,
+				E8660F25CF71ED2333716629 /* ClipboardHistoryService.swift in Sources */,
+				8CA716DCC04F0657863AE200 /* ClipboardItem.swift in Sources */,
 				11F747CE2EC75CEA00F841DB /* DragPreviewView.swift in Sources */,
 				F38DE6482D8243E7008B5C6D /* BatteryActivityManager.swift in Sources */,
 				B7174FF53D21506DA686DCCF /* AIUsageManager.swift in Sources */,

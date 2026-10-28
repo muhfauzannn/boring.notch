@@ -58,6 +58,9 @@ struct SettingsView: View {
                 NavigationLink(value: "Shelf") {
                     Label("Shelf", systemImage: "books.vertical")
                 }
+                NavigationLink(value: "Clipboard") {
+                    Label("Clipboard", systemImage: "list.clipboard")
+                }
                 NavigationLink(value: "Shortcuts") {
                     Label("Shortcuts", systemImage: "keyboard")
                 }
@@ -96,6 +99,8 @@ struct SettingsView: View {
                     FocusSettings()
                 case "Shelf":
                     Shelf()
+                case "Clipboard":
+                    ClipboardSettings()
                 case "Shortcuts":
                     Shortcuts()
                 case "Extensions":
@@ -1993,6 +1998,169 @@ struct AccentCircleButton: View {
     }
 }
 
+struct ClipboardSettings: View {
+    @Default(.clipboardHistoryEnabled) var enabled
+    @Default(.boringShelf) var boringShelf
+    @Default(.clipboardHistoryPaused) var paused
+    @Default(.clipboardHistoryLimit) var limit
+    @Default(.clipboardRetention) var retention
+    @Default(.clipboardIgnoredApps) var ignoredApps
+    @ObservedObject var history = ClipboardHistoryViewModel.shared
+    @State private var confirmClear = false
+
+    var body: some View {
+        Form {
+            Section {
+                Defaults.Toggle(key: .clipboardHistoryEnabled) {
+                    Text("Enable clipboard history")
+                }
+                Toggle("Pause recording", isOn: $paused)
+                    .disabled(!enabled)
+            } footer: {
+                if boringShelf {
+                    Text("Adds a Clipboard side to the shelf with what you copied recently. Click a card to copy it again, or drag it into another app.")
+                } else {
+                    Text("Turn on the shelf in Shelf settings to use clipboard history.")
+                }
+            }
+
+            Section {
+                Defaults.Toggle(key: .clipboardCaptureImages) {
+                    Text("Images")
+                }
+                Defaults.Toggle(key: .clipboardCaptureFiles) {
+                    Text("Files copied in Finder")
+                }
+            } header: {
+                Text("Record")
+            } footer: {
+                Text("Text and links are always recorded. Text over 1 MB and images over 20 MB are skipped.")
+            }
+            .disabled(!enabled)
+
+            Section {
+                Stepper(value: $limit, in: 20...500, step: 10) {
+                    HStack {
+                        Text("Keep up to")
+                        Spacer()
+                        Text("\(limit)")
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                        Text("items")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Picker("Remove items after", selection: $retention) {
+                    ForEach(ClipboardRetention.allCases) { retention in
+                        Text(retention.title).tag(retention)
+                    }
+                }
+                Defaults.Toggle(key: .clipboardSaveToDisk) {
+                    Text("Keep history after quitting")
+                }
+                Defaults.Toggle(key: .clipboardCloseAfterCopy) {
+                    Text("Close the notch after copying")
+                }
+            } header: {
+                Text("History")
+            } footer: {
+                Text("Pinned items don't count toward the limit and are never removed automatically.")
+            }
+            .disabled(!enabled)
+
+            Section {
+                Defaults.Toggle(key: .clipboardIgnorePrivateContent) {
+                    Text("Ignore passwords and other private content")
+                }
+                ForEach(ignoredApps) { app in
+                    HStack(spacing: 8) {
+                        ignoredAppIcon(app)
+                            .frame(width: 18, height: 18)
+                        Text(app.name)
+                        Spacer()
+                        Button {
+                            ignoredApps.removeAll { $0.bundleID == app.bundleID }
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Stop ignoring \(app.name)")
+                    }
+                }
+                HStack {
+                    Button("Add App…", action: addIgnoredApps)
+                    Spacer()
+                    Button("Restore Defaults") {
+                        ignoredApps = ClipboardIgnoredApp.defaults
+                    }
+                    .disabled(ignoredApps == ClipboardIgnoredApp.defaults)
+                }
+            } header: {
+                Text("Privacy")
+            } footer: {
+                Text("Password managers mark what they copy as private, so it isn't saved. Anything copied while an app on this list is in front is skipped too.")
+            }
+            .disabled(!enabled)
+
+            Section {
+                HStack {
+                    Text("\(history.items.count) items, \(history.count(for: .pinned)) pinned")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Clear History…") {
+                        confirmClear = true
+                    }
+                    .disabled(history.isEmpty)
+                }
+            } footer: {
+                Text("A shortcut to open the clipboard history can be set in Shortcuts.")
+            }
+            .confirmationDialog("Clear clipboard history?", isPresented: $confirmClear) {
+                Button("Clear History", role: .destructive) {
+                    history.clear()
+                }
+                Button("Clear Including Pinned", role: .destructive) {
+                    history.clear(includingPinned: true)
+                }
+            } message: {
+                Text("Pinned items are kept unless you clear them too. This can't be undone.")
+            }
+        }
+        .accentColor(.effectiveAccent)
+        .navigationTitle("Clipboard")
+    }
+
+    @ViewBuilder
+    private func ignoredAppIcon(_ app: ClipboardIgnoredApp) -> some View {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: app.bundleID) {
+            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        } else {
+            Image(systemName: "app.dashed")
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func addIgnoredApps() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.application]
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        panel.prompt = String(localized: "Ignore")
+        guard panel.runModal() == .OK else { return }
+
+        for url in panel.urls {
+            guard let bundleID = Bundle(url: url)?.bundleIdentifier,
+                  !ignoredApps.contains(where: { $0.bundleID == bundleID }) else { continue }
+            let name = FileManager.default.displayName(atPath: url.path)
+            ignoredApps.append(ClipboardIgnoredApp(bundleID: bundleID, name: (name as NSString).deletingPathExtension))
+        }
+    }
+}
+
 struct Shortcuts: View {
     var body: some View {
         Form {
@@ -2015,6 +2183,16 @@ struct Shortcuts: View {
                 KeyboardShortcuts.Recorder("Start or pause timer:", name: .togglePomodoro)
             } header: {
                 Text("Focus")
+            }
+            Section {
+                KeyboardShortcuts.Recorder("Open clipboard history:", name: .clipboardHistoryPanel)
+            } header: {
+                Text("Clipboard")
+            } footer: {
+                Text("Opens the shelf on its Clipboard side, on the screen the pointer is on. Press it again to close.")
+                    .multilineTextAlignment(.trailing)
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
             }
         }
         .accentColor(.effectiveAccent)
