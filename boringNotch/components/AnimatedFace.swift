@@ -25,7 +25,8 @@ struct IdleCatEyesView: View {
     @State private var sessionActive = true
 
     var body: some View {
-        IdleLoopClock(period: IdleCatChoreography.period, paused: !isVisible || !screenAwake || !sessionActive) { time in
+        IdleLoopClock(period: IdleCatChoreography.period, paused: !isVisible || !screenAwake || !sessionActive,
+                      tracks: [IdleCatChoreography.lookX, IdleCatChoreography.lid]) { time in
             IdleCatEyesArtwork(time: time, notchWidth: notchWidth, wingWidth: wingWidth)
         }
         .frame(width: notchWidth + 10 + wingWidth * 2, height: height)

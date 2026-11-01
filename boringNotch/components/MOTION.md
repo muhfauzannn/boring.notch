@@ -124,6 +124,7 @@
 - Keep the entire footprint fixed while the two capsules glance and flatten for a blink.
 - Idle eyes yield to music, Focus, HUDs and notifications. The old repeating Timer face has been removed.
 - One clock drives the pair. Remove it when the idle branch is not visible; pause for screen sleep, inactive login sessions and Reduce Motion.
+- Schedule 60 fps only during changing keyframe segments, including their endpoints. Hold poses sleep until the next movement instead of redrawing identical frames.
 - This is a menu bar app: another foreground application does not make the notch invisible. Do not pause solely because the app is not key or its scene is inactive.
 - The first and last frame of the 12-second choreography must match. Blink closing is faster than reopening; no per-frame random values.
 

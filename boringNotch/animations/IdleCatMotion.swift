@@ -113,26 +113,91 @@ public func idleMotionSeeded(_ i: Int, salt: Double = 0) -> Double {
 
 // MARK: - Clocks
 
+/// Schedules frames only while a keyframe value changes. Constant poses need no redraws.
+struct IdleMotionTimelineSchedule: TimelineSchedule {
+    let origin: Date
+    let period: TimeInterval
+    let frameOffsets: [TimeInterval]
+
+    init(origin: Date, period: Double, tracks: [IdleMotionKeys]) {
+        self.origin = origin
+        self.period = period / 1000
+        precondition(period > 0)
+        var offsets: Set<Double> = [0]
+        let step = 1000.0 / 60
+        if tracks.isEmpty {
+            offsets.formUnion(stride(from: 0.0, to: period, by: step))
+        } else {
+            for keys in tracks {
+                for (from, to) in zip(keys, keys.dropFirst()) where from.value != to.value && to.ms > from.ms {
+                    offsets.formUnion(stride(from: max(0, from.ms), to: min(period, to.ms), by: step))
+                    if to.ms >= 0 && to.ms < period { offsets.insert(to.ms) }
+                }
+            }
+        }
+        frameOffsets = offsets.sorted().map { $0 / 1000 }
+    }
+
+    func entries(from startDate: Date, mode: Mode) -> Entries {
+        var cycle = floor(startDate.timeIntervalSince(origin) / period)
+        let index = frameOffsets.firstIndex {
+            origin.addingTimeInterval(cycle * period + $0) > startDate
+        }
+        if index == nil { cycle += 1 }
+        return Entries(origin: origin, period: period, offsets: frameOffsets,
+                       cycle: cycle, index: index ?? 0, initialDate: startDate)
+    }
+
+    struct Entries: Sequence, IteratorProtocol {
+        let origin: Date
+        let period: TimeInterval
+        let offsets: [TimeInterval]
+        var cycle: Double
+        var index: Int
+        var initialDate: Date?
+
+        mutating func next() -> Date? {
+            if let date = initialDate {
+                initialDate = nil
+                return date
+            }
+            let date = origin.addingTimeInterval(cycle * period + offsets[index])
+            index += 1
+            if index == offsets.count {
+                index = 0
+                cycle += 1
+            }
+            return date
+        }
+    }
+}
+
 /// A looping clock from 0 to `period` ms. Frozen at 0 with Reduce Motion, or when `paused`
-/// (off screen, app in the background). Frame 0 must be a good drawing on its own.
+/// (off screen or the screen is asleep). Frame 0 must be a good drawing on its own.
 public struct IdleLoopClock<Content: View>: View {
     let period: Double
     var paused: Bool
+    let tracks: [IdleMotionKeys]
     let content: (Double) -> Content
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var start = Date()
 
-    public init(period: Double, paused: Bool = false, @ViewBuilder content: @escaping (Double) -> Content) {
+    public init(period: Double, paused: Bool = false, tracks: [IdleMotionKeys] = [], @ViewBuilder content: @escaping (Double) -> Content) {
         self.period = period
         self.paused = paused
+        self.tracks = tracks
         self.content = content
     }
 
     public var body: some View {
         let still = paused || reduceMotion
-        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: still)) { context in
-            let t = still ? 0 : (context.date.timeIntervalSince(start) * 1000).truncatingRemainder(dividingBy: period)
-            content(t)
+        if still {
+            content(0)
+        } else {
+            TimelineView(IdleMotionTimelineSchedule(origin: start, period: period, tracks: tracks)) { context in
+                let t = (context.date.timeIntervalSince(start) * 1000).truncatingRemainder(dividingBy: period)
+                content(t)
+            }
         }
     }
 }

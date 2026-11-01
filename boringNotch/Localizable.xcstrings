@@ -1429,9 +1429,6 @@
     "A new length applies the next time a phase starts." : {
 
     },
-    "A quiet blink and a little glance while the notch is idle. Music, timers and notifications take priority. Respects Reduce Motion." : {
-
-    },
     "A shortcut to open the clipboard history can be set in Shortcuts." : {
 
     },
@@ -19542,9 +19539,6 @@
         }
       }
     },
-    "Show cat eyes while idle" : {
-
-    },
     "Show cool face animation while inactive" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -20660,6 +20654,9 @@
           }
         }
       }
+    },
+    "Show simple eyes while idle" : {
+
     },
     "Show sneak peek on playback changes" : {
       "localizations" : {
@@ -22239,6 +22236,9 @@
       }
     },
     "Turn on the shelf in Shelf settings to use clipboard history." : {
+
+    },
+    "Two simple white eyes with a quiet blink while idle. Music, timers and notifications take priority. Respects Reduce Motion." : {
 
     },
     "Two-finger swipe up on notch to close, two-finger swipe down on notch to open when **Open notch on hover** option is disabled" : {
