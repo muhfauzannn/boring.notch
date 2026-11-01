@@ -403,6 +403,8 @@ struct ContentView: View {
                         NotchUsageView()
                     case .focus:
                         NotchFocusView()
+                    case .tasks:
+                        NotchSCELEView()
                     }
                 }
                 .transition(

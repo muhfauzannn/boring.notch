@@ -29,6 +29,7 @@ public enum NotchViews {
     case shelf
     case usage
     case focus
+    case tasks
 }
 
 /// What the shelf tab shows: dropped files, or the clipboard history.

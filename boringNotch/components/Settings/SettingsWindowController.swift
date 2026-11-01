@@ -10,6 +10,12 @@ import SwiftUI
 import Defaults
 import Sparkle
 
+@MainActor
+final class SettingsNavigation: ObservableObject {
+    static let shared = SettingsNavigation()
+    @Published var selectedTab = "General"
+}
+
 class SettingsWindowController: NSWindowController {
     static let shared = SettingsWindowController()
     private var updaterController: SPUStandardUpdaterController?
@@ -66,7 +72,8 @@ class SettingsWindowController: NSWindowController {
         window.delegate = self
     }
     
-    func showWindow() {
+    func showWindow(tab: String? = nil) {
+        if let tab { SettingsNavigation.shared.selectedTab = tab }
         // Set app to regular mode first
         NSApp.setActivationPolicy(.regular)
         

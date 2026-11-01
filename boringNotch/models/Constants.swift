@@ -94,6 +94,10 @@ enum OptionKeyAction: String, CaseIterable, Identifiable, Defaults.Serializable 
 }
 
 extension Defaults.Keys {
+    // MARK: SCELE
+    static let sceleEnabled = Key<Bool>("sceleEnabled", default: true)
+    static let sceleHideSubmitted = Key<Bool>("sceleHideSubmitted", default: true)
+
     // MARK: General
     static let menubarIcon = Key<Bool>("menubarIcon", default: true)
     static let showOnAllDisplays = Key<Bool>("showOnAllDisplays", default: false)

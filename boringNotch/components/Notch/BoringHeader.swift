@@ -16,10 +16,11 @@ struct BoringHeader: View {
     @Default(.showLyricsPanel) var lyricsMode
     @Default(.pomodoroEnabled) var pomodoroEnabled
     @Default(.clipboardHistoryEnabled) var clipboardHistoryEnabled
+    @Default(.sceleEnabled) var sceleEnabled
     var body: some View {
         HStack(spacing: 0) {
             HStack {
-                if ((!tvm.isEmpty || coordinator.alwaysShowTabs || clipboardHistoryEnabled) && Defaults[.boringShelf]) || AIUsageManager.shared.isEnabled || pomodoroEnabled {
+                if ((!tvm.isEmpty || coordinator.alwaysShowTabs || clipboardHistoryEnabled) && Defaults[.boringShelf]) || AIUsageManager.shared.isEnabled || pomodoroEnabled || sceleEnabled {
                     TabSelectionView()
                 } else if vm.notchState == .open {
                     EmptyView()

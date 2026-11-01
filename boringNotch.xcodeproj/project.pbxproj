@@ -154,6 +154,12 @@
 		E8660F25CF71ED2333716629 /* ClipboardHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2EC651B4EEEF599B83626B /* ClipboardHistoryService.swift */; };
 		106AE37F0D8CB306C30B982A /* ClipboardHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ABB34E3534E3F3BAC22C6EB /* ClipboardHistoryViewModel.swift */; };
 		5116CB44EBE19AB5B9AEE546 /* ClipboardHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50179493FC7ECE5D6C9C9B80 /* ClipboardHistoryView.swift */; };
+		DD75AA9A0C9804DCA643D101 /* SCELEModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86981C3A9DD59F23CC6E666 /* SCELEModels.swift */; };
+		A214125895FDC36E6C72F16C /* SCELEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A4A528E12D465C77BE86C8 /* SCELEClient.swift */; };
+		2F7B2C8C17F39DAD3267C74C /* SCELEStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DDC7D51D4078F165073A82A /* SCELEStorage.swift */; };
+		817F2BBD91B6C7804D1C433D /* SCELEManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D536E0C506D283419A40643 /* SCELEManager.swift */; };
+		A7AF43A8E598ECD5C7102FCE /* NotchSCELEView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F3E5187D2B6CEC9E43BB49B /* NotchSCELEView.swift */; };
+		C8097DE1DEEA5E21BB29FB51 /* SCELESettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF95D97848E8548B9566CD5A /* SCELESettings.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -331,6 +337,12 @@
 		CE2EC651B4EEEF599B83626B /* ClipboardHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistoryService.swift; sourceTree = "<group>"; };
 		2ABB34E3534E3F3BAC22C6EB /* ClipboardHistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistoryViewModel.swift; sourceTree = "<group>"; };
 		50179493FC7ECE5D6C9C9B80 /* ClipboardHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistoryView.swift; sourceTree = "<group>"; };
+		D86981C3A9DD59F23CC6E666 /* SCELEModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SCELEModels.swift; sourceTree = "<group>"; };
+		F7A4A528E12D465C77BE86C8 /* SCELEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SCELEClient.swift; sourceTree = "<group>"; };
+		9DDC7D51D4078F165073A82A /* SCELEStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SCELEStorage.swift; sourceTree = "<group>"; };
+		6D536E0C506D283419A40643 /* SCELEManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SCELEManager.swift; sourceTree = "<group>"; };
+		8F3E5187D2B6CEC9E43BB49B /* NotchSCELEView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchSCELEView.swift; sourceTree = "<group>"; };
+		BF95D97848E8548B9566CD5A /* SCELESettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SCELESettings.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -515,6 +527,7 @@
 			children = (
 				B141C23B2CA5F50900AC8CC8 /* Onboarding */,
 				B1C448992C97375A001F0858 /* Tips */,
+				20120682664A37183970CC81 /* SCELE */,
 				14C08BB72C8DE49E000F8AA0 /* Calendar */,
 				9A987A042C73CA66005CA465 /* Shelf */,
 				149E0B982C737D26006418B1 /* Webcam */,
@@ -790,6 +803,27 @@
 			path = Tips;
 			sourceTree = "<group>";
 		};
+		20120682664A37183970CC81 /* SCELE */ = {
+			isa = PBXGroup;
+			children = (
+				7DAEC8D37DDB21A1A6C67DFB /* Core */,
+				6D536E0C506D283419A40643 /* SCELEManager.swift */,
+				8F3E5187D2B6CEC9E43BB49B /* NotchSCELEView.swift */,
+				BF95D97848E8548B9566CD5A /* SCELESettings.swift */,
+			);
+			path = SCELE;
+			sourceTree = "<group>";
+		};
+		7DAEC8D37DDB21A1A6C67DFB /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				D86981C3A9DD59F23CC6E666 /* SCELEModels.swift */,
+				F7A4A528E12D465C77BE86C8 /* SCELEClient.swift */,
+				9DDC7D51D4078F165073A82A /* SCELEStorage.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -997,6 +1031,12 @@
 				111BEA612ED09B1B0079DD4E /* NSScreen+UUID.swift in Sources */,
 				1153BD8F2D986B1F00979FB0 /* MediaControllerProtocol.swift in Sources */,
 				9AB0C6BD2C73C9CB00F7CD30 /* NotchHomeView.swift in Sources */,
+				DD75AA9A0C9804DCA643D101 /* SCELEModels.swift in Sources */,
+				A214125895FDC36E6C72F16C /* SCELEClient.swift in Sources */,
+				2F7B2C8C17F39DAD3267C74C /* SCELEStorage.swift in Sources */,
+				817F2BBD91B6C7804D1C433D /* SCELEManager.swift in Sources */,
+				A7AF43A8E598ECD5C7102FCE /* NotchSCELEView.swift in Sources */,
+				C8097DE1DEEA5E21BB29FB51 /* SCELESettings.swift in Sources */,
 				B9D5612594B8FA4C8579B2B5 /* NotchUsageView.swift in Sources */,
 				0BB8ABC4F4B68BA082826917 /* NotchFocusView.swift in Sources */,
 				B172AAC02C95DA0B001623F1 /* InlineHUD.swift in Sources */,

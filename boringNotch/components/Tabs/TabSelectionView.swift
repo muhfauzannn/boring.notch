@@ -19,7 +19,8 @@ let tabs = [
     TabModel(label: "Home", icon: "house.fill", view: .home),
     TabModel(label: "Shelf", icon: "tray.fill", view: .shelf),
     TabModel(label: "Usage", icon: "sparkles", view: .usage),
-    TabModel(label: "Focus", icon: "timer", view: .focus)
+    TabModel(label: "Focus", icon: "timer", view: .focus),
+    TabModel(label: "Tasks", icon: "checklist", view: .tasks)
 ]
 
 struct TabSelectionView: View {
@@ -28,6 +29,7 @@ struct TabSelectionView: View {
     @Default(.showClaudeUsage) var showClaudeUsage
     @Default(.showChatGPTUsage) var showChatGPTUsage
     @Default(.pomodoroEnabled) var pomodoroEnabled
+    @Default(.sceleEnabled) var sceleEnabled
     @ObservedObject var pomodoro = PomodoroManager.shared
     @Namespace var animation
 
@@ -37,6 +39,7 @@ struct TabSelectionView: View {
             case .shelf: return boringShelf
             case .usage: return showClaudeUsage || showChatGPTUsage
             case .focus: return pomodoroEnabled
+            case .tasks: return sceleEnabled
             case .home: return true
             }
         }
@@ -45,7 +48,8 @@ struct TabSelectionView: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(visibleTabs) { tab in
-                    TabButton(label: tab.label, icon: tab.icon, selected: coordinator.currentView == tab.view) {
+                    TabButton(label: tab.label, icon: tab.icon, selected: coordinator.currentView == tab.view,
+                              horizontalPadding: visibleTabs.count > 4 ? 10 : 15) {
                         withAnimation(.smooth) {
                             coordinator.currentView = tab.view
                         }

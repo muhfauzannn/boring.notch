@@ -336,6 +336,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             _ = AIUsageManager.shared
             // Restores a running focus timer and schedules its end
             _ = PomodoroManager.shared
+            _ = SCELEManager.shared
             // Starts watching the pasteboard so copies are recorded before the shelf is opened
             _ = ClipboardHistoryViewModel.shared
         }

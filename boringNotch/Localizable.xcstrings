@@ -701,6 +701,29 @@
         }
       }
     },
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ %lld%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$lld%%"
+          }
+        }
+      }
+    },
+    "%@ focused" : {
+
+    },
     "%d%%" : {
       "localizations" : {
         "ar" : {
@@ -901,6 +924,39 @@
         }
       }
     },
+    "%lld × %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld × %2$lld"
+          }
+        }
+      }
+    },
+    "%lld Files" : {
+
+    },
+    "%lld items, %lld pinned" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld items, %2$lld pinned"
+          }
+        }
+      }
+    },
+    "%lld of %lld sessions done" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld sessions done"
+          }
+        }
+      }
+    },
     "%lld%%" : {
       "localizations" : {
         "ar" : {
@@ -1000,6 +1056,15 @@
           }
         }
       }
+    },
+    "%lldd" : {
+
+    },
+    "%lldh" : {
+
+    },
+    "%lldm" : {
+
     },
     "• Bug fixes" : {
       "localizations" : {
@@ -1300,6 +1365,36 @@
           }
         }
       }
+    },
+    "+%lld more" : {
+
+    },
+    "1 day" : {
+
+    },
+    "1 minute" : {
+
+    },
+    "5 minutes" : {
+
+    },
+    "7 days" : {
+
+    },
+    "15 minutes" : {
+
+    },
+    "30 days" : {
+
+    },
+    "30 minutes" : {
+
+    },
+    "A new length applies the next time a phase starts." : {
+
+    },
+    "A shortcut to open the clipboard history can be set in Shortcuts." : {
+
     },
     "About" : {
       "localizations" : {
@@ -1801,6 +1896,9 @@
         }
       }
     },
+    "Add App…" : {
+
+    },
     "Add manually" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1902,6 +2000,9 @@
         }
       }
     },
+    "Add music app…" : {
+
+    },
     "Add new visualizer" : {
       "localizations" : {
         "ar" : {
@@ -2001,6 +2102,9 @@
           }
         }
       }
+    },
+    "Add to Shelf" : {
+
     },
     "Additional features" : {
       "localizations" : {
@@ -2102,6 +2206,12 @@
         }
       }
     },
+    "Adds a Clipboard side to the shelf with what you copied recently. Click a card to copy it again, or drag it into another app." : {
+
+    },
+    "Adds a Focus tab to the open notch with a Pomodoro timer: focus, then take a break, with a longer break after a few sessions." : {
+
+    },
     "Advanced" : {
       "localizations" : {
         "ar" : {
@@ -2201,6 +2311,12 @@
           }
         }
       }
+    },
+    "AI Usage" : {
+
+    },
+    "All" : {
+
     },
     "All-day" : {
       "localizations" : {
@@ -3602,6 +3718,9 @@
         }
       }
     },
+    "Behavior" : {
+
+    },
     "Boost your productivity with Clipboard Manager" : {
       "localizations" : {
         "ar" : {
@@ -3901,6 +4020,15 @@
           }
         }
       }
+    },
+    "Break over" : {
+
+    },
+    "Break's over" : {
+
+    },
+    "Browsers, videos and notification sounds won't take over the player. Spotify, Apple Music, YouTube Music, TIDAL, Deezer, Amazon Music and other common music apps are included; add any other app here." : {
+
     },
     "Calendar" : {
       "localizations" : {
@@ -5202,6 +5330,21 @@
         }
       }
     },
+    "Claude Keychain access" : {
+
+    },
+    "Clear clipboard history?" : {
+
+    },
+    "Clear History" : {
+
+    },
+    "Clear History…" : {
+
+    },
+    "Clear Including Pinned" : {
+
+    },
     "Clear slot" : {
       "localizations" : {
         "ar" : {
@@ -5301,6 +5444,12 @@
           }
         }
       }
+    },
+    "Clipboard" : {
+
+    },
+    "Clipboard history is paused" : {
+
     },
     "Close" : {
       "localizations" : {
@@ -5502,6 +5651,9 @@
         }
       }
     },
+    "Close the notch after copying" : {
+
+    },
     "Closed Notch" : {
       "localizations" : {
         "ar" : {
@@ -5601,6 +5753,9 @@
           }
         }
       }
+    },
+    "Color" : {
+
     },
     "Color Presets" : {
       "localizations" : {
@@ -6002,6 +6157,24 @@
         }
       }
     },
+    "Copied" : {
+
+    },
+    "Copied %lld times" : {
+
+    },
+    "Copied from %@" : {
+
+    },
+    "Copies this item" : {
+
+    },
+    "Copy" : {
+
+    },
+    "Copy as Plain Text" : {
+
+    },
     "Copy items on drag" : {
       "localizations" : {
         "ar" : {
@@ -6101,6 +6274,9 @@
           }
         }
       }
+    },
+    "Copy something to start" : {
+
     },
     "Corner radius scaling" : {
       "localizations" : {
@@ -7002,6 +7178,9 @@
         }
       }
     },
+    "Cycle complete" : {
+
+    },
     "Default" : {
       "localizations" : {
         "ar" : {
@@ -7101,6 +7280,9 @@
           }
         }
       }
+    },
+    "Delete" : {
+
     },
     "Description" : {
       "extractionState" : "stale",
@@ -7906,6 +8088,9 @@
         }
       }
     },
+    "Durations" : {
+
+    },
     "Easily copy, store, and manage your most-used content. Upgrade now for advanced features like multi-item storage and quick access!" : {
       "localizations" : {
         "ar" : {
@@ -8306,6 +8491,9 @@
         }
       }
     },
+    "Enable clipboard history" : {
+
+    },
     "Enable colored spectrograms" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -8406,6 +8594,9 @@
           }
         }
       }
+    },
+    "Enable focus timer" : {
+
     },
     "Enable gestures" : {
       "localizations" : {
@@ -9408,6 +9599,18 @@
         }
       }
     },
+    "Feedback" : {
+
+    },
+    "File" : {
+
+    },
+    "Files" : {
+
+    },
+    "Files copied in Finder" : {
+
+    },
     "Files dropped on the shelf will be shared via this service" : {
       "localizations" : {
         "ar" : {
@@ -9607,6 +9810,18 @@
           }
         }
       }
+    },
+    "Focus" : {
+
+    },
+    "Focus done" : {
+
+    },
+    "Focus session done" : {
+
+    },
+    "Forever" : {
+
     },
     "Full screen behavior" : {
       "localizations" : {
@@ -10408,6 +10623,12 @@
         }
       }
     },
+    "Grant Keychain access…" : {
+
+    },
+    "Haptic feedback follows the haptics setting in General. A shortcut to start or pause the timer can be set in Shortcuts." : {
+
+    },
     "Hide all-day events" : {
       "localizations" : {
         "ar" : {
@@ -10908,6 +11129,9 @@
         }
       }
     },
+    "Hide lyrics" : {
+
+    },
     "Hide title bar" : {
       "localizations" : {
         "ar" : {
@@ -11207,6 +11431,9 @@
           }
         }
       }
+    },
+    "History" : {
+
     },
     "Hover delay" : {
       "localizations" : {
@@ -11608,6 +11835,18 @@
         }
       }
     },
+    "Ignore" : {
+
+    },
+    "Ignore passwords and other private content" : {
+
+    },
+    "Image" : {
+
+    },
+    "Images" : {
+
+    },
     "In progress" : {
       "localizations" : {
         "ar" : {
@@ -11909,6 +12148,15 @@
         }
       }
     },
+    "items" : {
+
+    },
+    "Keep history after quitting" : {
+
+    },
+    "Keep up to" : {
+
+    },
     "Layout Preview" : {
       "localizations" : {
         "ar" : {
@@ -12008,6 +12256,21 @@
           }
         }
       }
+    },
+    "Link" : {
+
+    },
+    "Links" : {
+
+    },
+    "Long break" : {
+
+    },
+    "Long break after" : {
+
+    },
+    "long break next" : {
+
     },
     "Lottie JSON URL" : {
       "localizations" : {
@@ -12308,6 +12571,15 @@
           }
         }
       }
+    },
+    "Lyrics" : {
+
+    },
+    "Lyrics timing" : {
+
+    },
+    "macOS will ask once for your login password. Choose Always Allow so boring.notch can keep reading the Claude Code sign-in. Only the Claude card needs this." : {
+
     },
     "Made with 🫶🏻 by not so boring not.people" : {
       "localizations" : {
@@ -13709,6 +13981,9 @@
         }
       }
     },
+    "min" : {
+
+    },
     "Mirror" : {
       "localizations" : {
         "ar" : {
@@ -14509,6 +14784,9 @@
         }
       }
     },
+    "New copies aren't being saved." : {
+
+    },
     "No custom animation available" : {
       "localizations" : {
         "ar" : {
@@ -15010,6 +15288,9 @@
         }
       }
     },
+    "No pinned items" : {
+
+    },
     "Not Now" : {
       "localizations" : {
         "ar" : {
@@ -15510,6 +15791,24 @@
         }
       }
     },
+    "Nothing here yet" : {
+
+    },
+    "Nothing yet" : {
+
+    },
+    "now" : {
+
+    },
+    "Now Playing sources" : {
+
+    },
+    "Numbers come from the same unofficial endpoints the Claude Code and Codex CLIs use, so they can change or stop working without notice. boring.notch only reads your existing sign-in and never stores or refreshes it. macOS may ask once to allow access to the Claude Code Keychain item." : {
+
+    },
+    "Only show music apps" : {
+
+    },
     "Open Calendar Settings" : {
       "localizations" : {
         "ar" : {
@@ -15609,6 +15908,15 @@
           }
         }
       }
+    },
+    "Open clipboard history:" : {
+
+    },
+    "Open Image" : {
+
+    },
+    "Open Link" : {
+
     },
     "Open Notch" : {
       "localizations" : {
@@ -16010,6 +16318,9 @@
         }
       }
     },
+    "Opens the shelf on its Clipboard side, on the screen the pointer is on. Press it again to close." : {
+
+    },
     "Option key behaviour" : {
       "localizations" : {
         "ar" : {
@@ -16110,6 +16421,18 @@
         }
       }
     },
+    "Password managers mark what they copy as private, so it isn't saved. Anything copied while an app on this list is in front is skipped too." : {
+
+    },
+    "Pause" : {
+
+    },
+    "Pause recording" : {
+
+    },
+    "Paused" : {
+
+    },
     "Pick a Color" : {
       "localizations" : {
         "ar" : {
@@ -16209,6 +16532,18 @@
           }
         }
       }
+    },
+    "Pin" : {
+
+    },
+    "Pinned" : {
+
+    },
+    "Pinned items are kept unless you clear them too. This can't be undone." : {
+
+    },
+    "Pinned items don't count toward the limit and are never removed automatically." : {
+
     },
     "Plugged In" : {
       "localizations" : {
@@ -16409,6 +16744,9 @@
           }
         }
       }
+    },
+    "Privacy" : {
+
     },
     "Progress bar style" : {
       "localizations" : {
@@ -16910,6 +17248,15 @@
         }
       }
     },
+    "Record" : {
+
+    },
+    "Refresh every" : {
+
+    },
+    "Refresh now" : {
+
+    },
     "Release name" : {
       "localizations" : {
         "ar" : {
@@ -17409,6 +17756,9 @@
           }
         }
       }
+    },
+    "Remove items after" : {
+
     },
     "Replace system HUD" : {
       "localizations" : {
@@ -18011,6 +18361,21 @@
         }
       }
     },
+    "Restart this phase" : {
+
+    },
+    "Restore Defaults" : {
+
+    },
+    "Resume" : {
+
+    },
+    "Resume recording" : {
+
+    },
+    "Right-click a card or hover it to pin it." : {
+
+    },
     "Running" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -18412,6 +18777,25 @@
         }
       }
     },
+    "Services" : {
+
+    },
+    "session" : {
+
+    },
+    "Session %lld of %lld · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Session %1$lld of %2$lld · %3$@"
+          }
+        }
+      }
+    },
+    "sessions" : {
+
+    },
     "Settings" : {
       "localizations" : {
         "ar" : {
@@ -18511,6 +18895,9 @@
           }
         }
       }
+    },
+    "Settings…" : {
+
     },
     "Shelf" : {
       "localizations" : {
@@ -18612,6 +18999,12 @@
         }
       }
     },
+    "Short break" : {
+
+    },
+    "short break next" : {
+
+    },
     "Shortcuts" : {
       "localizations" : {
         "ar" : {
@@ -18711,6 +19104,9 @@
           }
         }
       }
+    },
+    "Show %@ usage" : {
+
     },
     "Show battery indicator" : {
       "localizations" : {
@@ -19112,6 +19508,9 @@
         }
       }
     },
+    "Show countdown in closed notch" : {
+
+    },
     "Show HUD in open notch" : {
       "localizations" : {
         "ar" : {
@@ -19212,6 +19611,12 @@
         }
       }
     },
+    "Show in Finder" : {
+
+    },
+    "Show lyrics" : {
+
+    },
     "Show lyrics below artist name" : {
       "localizations" : {
         "ar" : {
@@ -19311,6 +19716,9 @@
           }
         }
       }
+    },
+    "Show macOS notification" : {
+
     },
     "Show menu bar icon" : {
       "localizations" : {
@@ -20212,6 +20620,15 @@
         }
       }
     },
+    "Show the current lyric under the closed notch" : {
+
+    },
+    "Show warning in closed notch" : {
+
+    },
+    "Skip to %@" : {
+
+    },
     "Slider color" : {
       "localizations" : {
         "ar" : {
@@ -20612,6 +21029,9 @@
         }
       }
     },
+    "Sound when a phase ends" : {
+
+    },
     "Speed" : {
       "localizations" : {
         "ar" : {
@@ -20811,6 +21231,24 @@
           }
         }
       }
+    },
+    "Start" : {
+
+    },
+    "Start breaks automatically" : {
+
+    },
+    "Start focus sessions automatically" : {
+
+    },
+    "Start or pause timer:" : {
+
+    },
+    "Start the cycle over" : {
+
+    },
+    "Stop ignoring %@" : {
+
     },
     "Stopped" : {
       "extractionState" : "stale",
@@ -21014,6 +21452,9 @@
         }
       }
     },
+    "Synced lyrics come from LRCLIB, a free community database, so some songs have no timed lyrics. Use the lyrics button in the notch header (or add it to the media controls) to switch Home to lyrics. Move the timing slider right if lyrics lag behind the music." : {
+
+    },
     "System" : {
       "localizations" : {
         "ar" : {
@@ -21213,6 +21654,18 @@
           }
         }
       }
+    },
+    "Text" : {
+
+    },
+    "Text and links are always recorded. Text over 1 MB and images over 20 MB are skipped." : {
+
+    },
+    "Text, links, images and files you copy show up here." : {
+
+    },
+    "Time to focus · %@" : {
+
     },
     "Time to Full Charge: %lld min" : {
       "localizations" : {
@@ -21414,6 +21867,9 @@
         }
       }
     },
+    "Today" : {
+
+    },
     "Toggle Notch Open:" : {
       "localizations" : {
         "ar" : {
@@ -21613,6 +22069,9 @@
           }
         }
       }
+    },
+    "Turn on the shelf in Shelf settings to use clipboard history." : {
+
     },
     "Two-finger swipe up on notch to close, two-finger swipe down on notch to open when **Open notch on hover** option is disabled" : {
       "localizations" : {
@@ -22114,6 +22573,9 @@
           }
         }
       }
+    },
+    "Unpin" : {
+
     },
     "Upgrade to Pro" : {
       "localizations" : {
@@ -22815,6 +23277,9 @@
         }
       }
     },
+    "Warn when a limit passes %lld%%" : {
+
+    },
     "Welcome" : {
       "localizations" : {
         "ar" : {
@@ -23014,6 +23479,9 @@
           }
         }
       }
+    },
+    "While the timer runs, the closed-notch countdown takes the place of the music live activity." : {
+
     },
     "Window Appearance" : {
       "localizations" : {

@@ -105,6 +105,16 @@ brew install --cask TheBoredTeam/boring-notch/boring-notch
 - Use the controls to manage your music like a rockstar.
 - Click the star in your menu bar to customize your notch to your heart's content.
 
+### SCELE tasks
+
+Open **Settings → SCELE** and sign in with your `scele.cs.ui.ac.id` account. The **Tasks** tab shows assignment and quiz deadlines, countdowns in Jakarta time (WIB), and submission/attempt status. Select the courses you want to follow in Settings; right-click a task and choose **Hide from notch** to hide another class's deadline.
+
+Tasks refresh every five minutes while enabled, with a local cache for immediate/offline viewing. The access token is stored in macOS Keychain; the password is only used during sign-in. Disconnecting removes the saved token and task cache. This integration reads Moodle data; submissions and quiz attempts are opened in your browser.
+
+The list covers the next 60 days and overdue work from the last seven days. Hidden or restricted Moodle activities are omitted, and unavailable submission statuses remain labeled as unavailable. A finished quiz attempt can still allow another attempt; turn off **Hide submitted assignments and finished quiz attempts** to keep those quizzes visible.
+
+Run the integration's dependency-free checks with `swift test`. Build the macOS app with the `boringNotch` scheme in Xcode.
+
 ## 📋 Roadmap
 - [x] Playback live activity 🎧
 - [x] Calendar integration 📆

@@ -16,7 +16,7 @@ import SwiftUIIntrospect
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
-    @State private var selectedTab = "General"
+    @ObservedObject private var navigation = SettingsNavigation.shared
     @State private var accentColorUpdateTrigger = UUID()
 
     let updaterController: SPUStandardUpdaterController?
@@ -27,7 +27,7 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $selectedTab) {
+            List(selection: $navigation.selectedTab) {
                 NavigationLink(value: "General") {
                     Label("General", systemImage: "gear")
                 }
@@ -51,6 +51,9 @@ struct SettingsView: View {
                 }
                 NavigationLink(value: "Focus") {
                     Label("Focus", systemImage: "timer")
+                }
+                NavigationLink(value: "SCELE") {
+                    Label("SCELE", systemImage: "graduationcap")
                 }
 //                NavigationLink(value: "Downloads") {
 //                    Label("Downloads", systemImage: "square.and.arrow.down")
@@ -80,7 +83,7 @@ struct SettingsView: View {
             .navigationSplitViewColumnWidth(200)
         } detail: {
             Group {
-                switch selectedTab {
+                switch navigation.selectedTab {
                 case "General":
                     GeneralSettings()
                 case "Appearance":
@@ -97,6 +100,8 @@ struct SettingsView: View {
                     AIUsageSettings()
                 case "Focus":
                     FocusSettings()
+                case "SCELE":
+                    SCELESettings()
                 case "Shelf":
                     Shelf()
                 case "Clipboard":

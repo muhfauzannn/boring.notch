@@ -11,6 +11,7 @@ struct TabButton<Accessory: View>: View {
     let label: String
     let icon: String
     let selected: Bool
+    var horizontalPadding: CGFloat = 15
     let onClick: () -> Void
     /// Optional content after the icon, like the Focus tab's countdown.
     @ViewBuilder var accessory: () -> Accessory
@@ -21,10 +22,12 @@ struct TabButton<Accessory: View>: View {
                 Image(systemName: icon)
                 accessory()
             }
-            .padding(.horizontal, 15)
+            .padding(.horizontal, horizontalPadding)
             .contentShape(Capsule())
         }
         .buttonStyle(PlainButtonStyle())
+        .help(label)
+        .accessibilityLabel(label)
     }
 }
 
