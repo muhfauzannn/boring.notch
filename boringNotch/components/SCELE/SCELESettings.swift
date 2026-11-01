@@ -4,6 +4,8 @@ import SwiftUI
 struct SCELESettings: View {
     @ObservedObject private var manager = SCELEManager.shared
     @Default(.sceleEnabled) private var enabled
+    @Default(.sceleTaskNotifications) private var notificationsEnabled
+    @Default(.sceleSyncMinutes) private var syncMinutes
     @State private var username = ""
     @State private var password = ""
     @State private var search = ""
@@ -13,10 +15,34 @@ struct SCELESettings: View {
             Section {
                 Toggle("Show Tasks tab", isOn: $enabled)
                     .disabled(manager.isConnecting)
-                Text("Assignments and quizzes from scele.cs.ui.ac.id. Updates every 5 minutes while enabled.")
+                Text("Assignments and quizzes from scele.cs.ui.ac.id.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                LabeledContent("Sync interval") {
+                    HStack(spacing: 6) {
+                        TextField("Minutes", value: intervalBinding, format: .number.grouping(.never))
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 55)
+                            .accessibilityLabel("Sync interval in minutes")
+                        Text("min").foregroundStyle(.secondary)
+                        Stepper("Sync interval", value: intervalBinding, in: SCELESyncInterval.minuteRange)
+                            .labelsHidden()
+                    }
+                }
+                .disabled(manager.isConnecting)
+                Text("Choose 1–1440 minutes. Changes apply immediately while SCELE is enabled. You can also refresh manually.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: { Text("SCELE") }
+
+            Section {
+                Toggle("Notify in the notch about new tasks", isOn: $notificationsEnabled)
+                Text("Shows a short banner when a sync finds a new assignment or quiz in your selected courses. The first sync and newly selected courses stay quiet. Hover or click the banner to open Tasks.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button("Preview notch notification") { manager.previewTaskNotification() }
+                    .disabled(!enabled || !notificationsEnabled)
+            } header: { Text("Notifications") }
 
             Section {
                 if manager.isConnected {
@@ -62,8 +88,12 @@ struct SCELESettings: View {
 
             if manager.isConnected {
                 Section {
+                    Defaults.Toggle(key: .sceleShowInCalendar) { Text("Show SCELE deadlines in the Home calendar") }
+                    Text("Assignments and quizzes appear on their due date with an orange marker and a SCELE label. Home uses your Mac’s time zone.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     Defaults.Toggle(key: .sceleHideSubmitted) { Text("Hide submitted assignments and finished quiz attempts") }
-                    Text("Shows deadlines for the next 60 days and overdue work from the last 7 days. Times in the notch use WIB. A finished quiz attempt may still allow another attempt.")
+                    Text("Shows deadlines for the next 60 days and overdue work from the last 7 days. Times in the Tasks tab use WIB. A finished quiz attempt may still allow another attempt.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     if manager.statusFailureCount > 0 {
@@ -112,6 +142,10 @@ struct SCELESettings: View {
     private var filteredCourses: [SCELECourse] {
         manager.courses.filter { search.isEmpty || $0.title.localizedCaseInsensitiveContains(search)
             || $0.subtitle.localizedCaseInsensitiveContains(search) }
+    }
+
+    private var intervalBinding: Binding<Int> {
+        Binding(get: { SCELESyncInterval.minutes(syncMinutes) }, set: { syncMinutes = SCELESyncInterval.minutes($0) })
     }
 
     private func connect() {

@@ -109,7 +109,11 @@ brew install --cask TheBoredTeam/boring-notch/boring-notch
 
 Open **Settings → SCELE** and sign in with your `scele.cs.ui.ac.id` account. The **Tasks** tab shows assignment and quiz deadlines, countdowns in Jakarta time (WIB), and submission/attempt status. Select the courses you want to follow in Settings; right-click a task and choose **Hide from notch** to hide another class's deadline.
 
-Tasks refresh every five minutes while enabled, with a local cache for immediate/offline viewing. The access token is stored in macOS Keychain; the password is only used during sign-in. Disconnecting removes the saved token and task cache. This integration reads Moodle data; submissions and quiz attempts are opened in your browser.
+Choose the sync interval in **Settings → SCELE** (1–1440 minutes, five minutes by default). The new interval takes effect immediately, with a local cache for immediate/offline viewing. The access token is stored in macOS Keychain; the password is only used during sign-in. Disconnecting removes the saved token and task cache. This integration reads Moodle data; submissions and quiz attempts are opened in your browser.
+
+SCELE deadlines also appear on their due date in Home's daily calendar, sorted alongside calendar events and reminders. Orange markers, activity icons, and a SCELE label distinguish them. Home uses your Mac's time zone; the Tasks tab uses WIB. Course selection, hidden tasks, and the submitted-task filter apply to both views. Turn this off with **Show SCELE deadlines in the Home calendar**. The Home agenda can show SCELE tasks even when the macOS calendar integration is disabled.
+
+New assignments and quizzes trigger a six-second banner in the closed notch after the next successful sync. Hover or click to open Tasks. The first sync and newly selected courses establish a quiet baseline, and the saved discovery history prevents repeated alerts after relaunch or deadline changes. Banners wait while the notch is open, hidden, or showing another activity. Configure or preview them in **Settings → SCELE → Notifications**.
 
 The list covers the next 60 days and overdue work from the last seven days. Hidden or restricted Moodle activities are omitted, and unavailable submission statuses remain labeled as unavailable. A finished quiz attempt can still allow another attempt; turn off **Hide submitted assignments and finished quiz attempts** to keep those quizzes visible.
 

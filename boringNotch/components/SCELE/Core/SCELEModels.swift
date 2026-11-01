@@ -80,6 +80,39 @@ struct SCELETask: Codable, Identifiable, Equatable, Sendable {
     static func deadlineOrder(_ lhs: Self, _ rhs: Self) -> Bool {
         lhs.dueDate == rhs.dueDate ? lhs.id < rhs.id : lhs.dueDate < rhs.dueDate
     }
+
+    static func onDay(_ date: Date, calendar: Calendar, tasks: [Self], selectedIDs: Set<Int>,
+                      hiddenIDs: Set<String>, hideSubmitted: Bool) -> [Self] {
+        guard let day = calendar.dateInterval(of: .day, for: date) else { return [] }
+        return tasks.filter {
+            $0.dueDate >= day.start && $0.dueDate < day.end && selectedIDs.contains($0.courseID)
+                && !hiddenIDs.contains($0.id) && !(hideSubmitted && $0.submission.isFinished)
+        }.sorted(by: Self.deadlineOrder)
+    }
+}
+
+enum SCELESyncInterval {
+    static let minuteRange = 1...1440
+
+    static func minutes(_ configured: Int) -> Int {
+        min(max(configured, minuteRange.lowerBound), minuteRange.upperBound)
+    }
+
+    static func seconds(_ configured: Int) -> TimeInterval { TimeInterval(minutes(configured)) * 60 }
+
+    static func isFresh(updatedAt: Date?, now: Date = Date(), minutes: Int) -> Bool {
+        guard let updatedAt else { return false }
+        let age = now.timeIntervalSince(updatedAt)
+        return age >= 0 && age < seconds(minutes)
+    }
+
+    static func nextDelay(updatedAt: Date?, now: Date = Date(), minutes: Int) -> TimeInterval {
+        let interval = seconds(minutes)
+        guard let updatedAt else { return interval }
+        let age = now.timeIntervalSince(updatedAt)
+        // A failed/stale refresh retries after an interval instead of spinning in a tight loop.
+        return age >= 0 && age < interval ? interval - age : interval
+    }
 }
 
 struct SCELECache: Codable, Sendable {

@@ -15,11 +15,12 @@ import SwiftUI
 struct MusicPlayerView: View {
     @EnvironmentObject var vm: BoringViewModel
     let albumArtNamespace: Namespace.ID
+    var showsCalendar = false
 
     var body: some View {
         HStack {
             AlbumArtView(vm: vm, albumArtNamespace: albumArtNamespace).padding(.all, 5)
-            MusicControlsView().drawingGroup().compositingGroup()
+            MusicControlsView(showsCalendar: showsCalendar).drawingGroup().compositingGroup()
         }
     }
 }
@@ -110,6 +111,7 @@ struct AlbumArtView: View {
 }
 
 struct MusicControlsView: View {
+    var showsCalendar = false
     @ObservedObject var musicManager = MusicManager.shared
         @EnvironmentObject var vm: BoringViewModel
         @ObservedObject var webcamManager = WebcamManager.shared
@@ -229,7 +231,7 @@ struct MusicControlsView: View {
         let padded = slotConfig.padded(to: sanitizedLimit, filler: .none)
         let result = Array(padded.prefix(sanitizedLimit))
         // If calendar and camera are both visible alongside music, hide the edge slots
-        let shouldHideEdges = Defaults[.showCalendar] && Defaults[.showMirror] && webcamManager.cameraAvailable && vm.isCameraExpanded
+        let shouldHideEdges = showsCalendar && Defaults[.showMirror] && webcamManager.cameraAvailable && vm.isCameraExpanded
         if shouldHideEdges && result.count >= 5 {
             return Array(result.dropFirst().dropLast())
         }
@@ -425,7 +427,11 @@ struct NotchHomeView: View {
     @ObservedObject var webcamManager = WebcamManager.shared
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var coordinator = BoringViewCoordinator.shared
+    @ObservedObject private var sceleManager = SCELEManager.shared
     @Default(.showLyricsPanel) private var lyricsMode
+    @Default(.showCalendar) private var showCalendar
+    @Default(.sceleEnabled) private var sceleEnabled
+    @Default(.sceleShowInCalendar) private var showSCELEInCalendar
     let albumArtNamespace: Namespace.ID
 
     var body: some View {
@@ -448,11 +454,15 @@ struct NotchHomeView: View {
         Defaults[.showMirror] && webcamManager.cameraAvailable && vm.isCameraExpanded
     }
 
-    private var mainContent: some View {
-        HStack(alignment: .top, spacing: (shouldShowCamera && Defaults[.showCalendar]) ? 10 : 15) {
-            MusicPlayerView(albumArtNamespace: albumArtNamespace)
+    private var shouldShowAgenda: Bool {
+        showCalendar || (sceleEnabled && showSCELEInCalendar && sceleManager.isConnected)
+    }
 
-            if Defaults[.showCalendar] {
+    private var mainContent: some View {
+        HStack(alignment: .top, spacing: (shouldShowCamera && shouldShowAgenda) ? 10 : 15) {
+            MusicPlayerView(albumArtNamespace: albumArtNamespace, showsCalendar: shouldShowAgenda)
+
+            if shouldShowAgenda {
                 CalendarView()
                     .frame(width: shouldShowCamera ? 170 : 215)
                     .onHover { isHovering in

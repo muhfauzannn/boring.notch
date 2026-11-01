@@ -177,7 +177,29 @@ struct WheelPicker: View {
 struct CalendarView: View {
     @EnvironmentObject var vm: BoringViewModel
     @ObservedObject private var calendarManager = CalendarManager.shared
+    @ObservedObject private var sceleManager = SCELEManager.shared
+    @Default(.showCalendar) private var showCalendar
+    @Default(.sceleEnabled) private var sceleEnabled
+    @Default(.sceleShowInCalendar) private var showSCELEInCalendar
+    @Default(.sceleHideSubmitted) private var hideSubmittedTasks
     @State private var selectedDate = Date()
+
+    private var includesSCELE: Bool { sceleEnabled && showSCELEInCalendar && sceleManager.isConnected }
+
+    private var dailyTasks: [SCELETask] {
+        guard includesSCELE else { return [] }
+        return SCELETask.onDay(selectedDate, calendar: .current, tasks: sceleManager.tasks,
+                               selectedIDs: sceleManager.selectedCourseIDs, hiddenIDs: sceleManager.hiddenTaskIDs,
+                               hideSubmitted: hideSubmittedTasks)
+    }
+
+    private var nativeEvents: [EventModel] {
+        guard showCalendar, let day = Calendar.current.dateInterval(of: .day, for: selectedDate) else { return [] }
+        // A newly selected date must not briefly show the previous day's rows while EventKit loads.
+        return calendarManager.events.filter {
+            $0.start < day.end && ($0.end > day.start || $0.start >= day.start)
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -210,22 +232,23 @@ struct CalendarView: View {
             }
 
             let filteredEvents = EventListView.filteredEvents(
-                events: calendarManager.events
+                events: nativeEvents
             )
-            if filteredEvents.isEmpty {
-                EmptyEventsView(selectedDate: selectedDate)
+            if filteredEvents.isEmpty && dailyTasks.isEmpty {
+                EmptyEventsView(selectedDate: selectedDate, includesSCELE: includesSCELE)
                 Spacer(minLength: 0)
             } else {
-                EventListView(events: calendarManager.events)
+                EventListView(events: nativeEvents, sceleTasks: dailyTasks)
             }
         }
         .listRowBackground(Color.clear)
         .frame(height: 120)
         // Fetch events for the selected day. `.task(id:)` cancels the previous fetch when the
         // date changes, and CalendarManager drops any stale result that still completes late.
-        .task(id: Calendar.current.startOfDay(for: selectedDate)) {
-            await calendarManager.updateCurrentDate(selectedDate)
+        .task(id: showCalendar ? Calendar.current.startOfDay(for: selectedDate) : nil) {
+            if showCalendar { await calendarManager.updateCurrentDate(selectedDate) }
         }
+        .task { if includesSCELE { await sceleManager.refresh() } }
         .onChange(of: vm.notchState) { _, _ in
             // Resetting selectedDate triggers the fetch above; no separate fetch for "now" that
             // could race with it.
@@ -239,13 +262,14 @@ struct CalendarView: View {
 
 struct EmptyEventsView: View {
     let selectedDate: Date
+    var includesSCELE = false
     
     var body: some View {
         VStack {
             Image(systemName: "calendar.badge.checkmark")
                 .font(.title)
                 .foregroundColor(Color(white: 0.65))
-            Text(Calendar.current.isDateInToday(selectedDate) ? "No events today" : "No events")
+            Text(emptyTitle)
                 .font(.subheadline)
                 .foregroundColor(.white)
             Text("Enjoy your free time!")
@@ -253,12 +277,47 @@ struct EmptyEventsView: View {
                 .foregroundColor(Color(white: 0.65))
         }
     }
+
+    private var emptyTitle: String {
+        if includesSCELE { return Calendar.current.isDateInToday(selectedDate) ? "No events or tasks today" : "No events or tasks" }
+        return Calendar.current.isDateInToday(selectedDate) ? "No events today" : "No events"
+    }
+}
+
+enum DailyAgendaItem: Identifiable, Equatable {
+    case calendar(EventModel)
+    case scele(SCELETask)
+
+    var id: String {
+        switch self {
+        case .calendar(let event): return "calendar-\(event.id)"
+        case .scele(let task): return "scele-\(task.id)"
+        }
+    }
+
+    var start: Date {
+        switch self { case .calendar(let event): return event.start; case .scele(let task): return task.dueDate }
+    }
+
+    var end: Date {
+        switch self { case .calendar(let event): return event.end; case .scele(let task): return task.dueDate }
+    }
+
+    var isAllDay: Bool {
+        if case .calendar(let event) = self { return event.isAllDay }
+        return false
+    }
+
+    var url: URL? {
+        switch self { case .calendar(let event): return event.calendarAppURL(); case .scele(let task): return task.url }
+    }
 }
 
 struct EventListView: View {
     @Environment(\.openURL) private var openURL
     @ObservedObject private var calendarManager = CalendarManager.shared
     let events: [EventModel]
+    var sceleTasks: [SCELETask] = []
     @Default(.autoScrollToNextEvent) private var autoScrollToNextEvent
     @Default(.showFullEventTitles) private var showFullEventTitles
 
@@ -282,15 +341,21 @@ struct EventListView: View {
         Self.filteredEvents(events: events)
     }
 
+    private var agendaItems: [DailyAgendaItem] {
+        let combined = filteredEvents.map(DailyAgendaItem.calendar) + sceleTasks.map(DailyAgendaItem.scele)
+        return combined.sorted { $0.start == $1.start ? $0.id < $1.id : $0.start < $1.start }
+    }
+
     private func scrollToRelevantEvent(proxy: ScrollViewProxy) {
+        guard autoScrollToNextEvent else { return }
         let now = Date()
         // Determine a single target using preferred search order:
         // 1) first non-all-day upcoming/in-progress event
         // 2) first all-day event
         // 3) last event (fallback)
-        let nonAllDayUpcoming = filteredEvents.first(where: { !$0.isAllDay && $0.end > now })
-        let firstAllDay = filteredEvents.first(where: { $0.isAllDay })
-        let lastEvent = filteredEvents.last
+        let nonAllDayUpcoming = agendaItems.first(where: { !$0.isAllDay && $0.end > now })
+        let firstAllDay = agendaItems.first(where: { $0.isAllDay })
+        let lastEvent = agendaItems.last
         guard let target = nonAllDayUpcoming ?? firstAllDay ?? lastEvent else { return }
 
         Task { @MainActor in
@@ -303,15 +368,18 @@ struct EventListView: View {
     var body: some View {
         ScrollViewReader { proxy in
             List {
-                ForEach(filteredEvents) { event in
+                ForEach(agendaItems) { item in
                     Button(action: {
-                        if let url = event.calendarAppURL() {
+                        if let url = item.url {
                             openURL(url)
                         }
                     }) {
-                        eventRow(event)
+                        switch item {
+                        case .calendar(let event): eventRow(event)
+                        case .scele(let task): SCELECalendarTaskRow(task: task, showFullTitle: showFullEventTitles)
+                        }
                     }
-                    .id(event.id)
+                    .id(item.id)
                     .padding(.leading, -5)
                     .buttonStyle(PlainButtonStyle())
                     .listRowSeparator(.automatic)
@@ -326,7 +394,7 @@ struct EventListView: View {
             .onAppear {
                 scrollToRelevantEvent(proxy: proxy)
             }
-            .onChange(of: filteredEvents) { _, _ in
+            .onChange(of: agendaItems) { _, _ in
                 scrollToRelevantEvent(proxy: proxy)
             }
         }
@@ -431,6 +499,44 @@ struct EventListView: View {
                         ? 0.6 : 1.0)
             )
         }
+    }
+}
+
+struct SCELECalendarTaskRow: View {
+    let task: SCELETask
+    var showFullTitle = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 5) {
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(Color.orange)
+                .frame(width: 3)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Image(systemName: task.kind == .quiz ? "questionmark.square" : "doc.text")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.orange)
+                    Text(task.title)
+                        .font(.callout.weight(.medium))
+                        .foregroundStyle(.white)
+                        .lineLimit(showFullTitle ? nil : 2)
+                }
+                Text("SCELE · \(task.courseName)")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text(task.dueDate, style: .time)
+                .font(.caption)
+                .foregroundStyle(.orange)
+                .fixedSize()
+        }
+        .opacity(task.submission.isFinished ? 0.5 : 1)
+        .help("\(task.title)\nSCELE · \(task.courseName)\n\(task.submission.title)")
+        .accessibilityElement(children: .combine)
     }
 }
 

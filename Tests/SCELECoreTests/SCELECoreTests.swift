@@ -110,7 +110,7 @@ private let course = SCELECourse(id: 7, fullName: "Analysis &amp; Design", short
         case "mod_assign_get_assignments":
             #expect(form["courseids[0]"] == "7")
             #expect(form["courseids[1]"] == nil)
-            return (#"{"courses":[{"id":7,"assignments":[{"id":12,"cmid":120,"name":"Design &amp; Model","duedate":1790003600}]}],"warnings":[{"warningcode":"1","message":"No access rights in module context"}]}"#, 200)
+            return (#"{"courses":[{"id":7,"assignments":[{"id":12,"cmid":120,"name":"Design &amp; Model","duedate":1790003600},{"id":14,"cmid":140,"name":"No deadline","duedate":0},{"id":15,"cmid":150,"name":"Distant deadline","duedate":1798000000}]}],"warnings":[{"warningcode":"1","message":"No access rights in module context"}]}"#, 200)
         case "mod_quiz_get_quizzes_by_courses":
             return (#"{"quizzes":[{"id":13,"course":7,"coursemodule":130,"name":"Quiz","timeclose":1790007200}]}"#, 200)
         case "mod_assign_get_submission_status":
@@ -131,6 +131,7 @@ private let course = SCELECourse(id: 7, fullName: "Analysis &amp; Design", short
     #expect(assignment.dueDate.timeIntervalSince1970 == 1_790_010_800)
     #expect(assignment.url.absoluteString == "https://scele.cs.ui.ac.id/mod/assign/view.php?id=120")
     #expect(result.tasks.first?.submission == .completed)
+    #expect(result.inventoryIDs == ["assignment-12", "assignment-14", "assignment-15", "quiz-13"])
 }
 
 @Test func statusFailureKeepsDeadlineWithUnknownStatus() async throws {
@@ -200,4 +201,139 @@ private let course = SCELECourse(id: 7, fullName: "Analysis &amp; Design", short
     #expect(try store.read()?.token == "replacement-token")
     try store.delete()
     #expect(try store.read() == nil)
+}
+
+private func discoveryTask(_ id: Int, courseID: Int = 7, submission: SCELESubmissionState = .notSubmitted,
+                           deadline: Date = now.addingTimeInterval(3600)) -> SCELETask {
+    SCELETask(instanceID: id, moduleID: id * 10, courseID: courseID, courseName: "Course \(courseID)",
+               title: "Assignment \(id)", kind: .assignment, dueDate: deadline, submission: submission)
+}
+
+private func snapshot(_ tasks: [SCELETask], inventoryIDs: Set<String> = []) -> SCELETaskResult {
+    SCELETaskResult(tasks: tasks, statusFailureCount: 0, inventoryIDs: inventoryIDs)
+}
+
+@Test func firstSyncIsQuietAndOnlyNewTasksNotifyOnce() {
+    var discovery = SCELETaskDiscovery()
+    let old = discoveryTask(1)
+    let new = discoveryTask(2)
+    #expect(discovery.discover(in: snapshot([old]), courseIDs: [7], hiddenIDs: [], now: now).isEmpty)
+    let fresh = discovery.discover(in: snapshot([old, new]), courseIDs: [7], hiddenIDs: [], now: now)
+    #expect(fresh.map(\.id) == [new.id])
+    #expect(discovery.discover(in: snapshot([old, new]), courseIDs: [7], hiddenIDs: [], now: now).isEmpty)
+}
+
+@Test func notificationHistorySurvivesRelaunchAndDeadlineChanges() throws {
+    var discovery = SCELETaskDiscovery()
+    let task = discoveryTask(1)
+    _ = discovery.discover(in: snapshot([task]), courseIDs: [7], hiddenIDs: [], now: now)
+    var restored = try JSONDecoder().decode(SCELETaskDiscovery.self, from: JSONEncoder().encode(discovery))
+    let rescheduled = discoveryTask(1, deadline: now.addingTimeInterval(86_400))
+    #expect(restored.discover(in: snapshot([rescheduled]), courseIDs: [7], hiddenIDs: [], now: now).isEmpty)
+    _ = restored.discover(in: snapshot([]), courseIDs: [7], hiddenIDs: [], now: now)
+    #expect(restored.discover(in: snapshot([task]), courseIDs: [7], hiddenIDs: [], now: now).isEmpty)
+}
+
+@Test func newlySelectedCoursesAndReselectedCoursesDoNotAnnounceBacklogs() {
+    var discovery = SCELETaskDiscovery()
+    let courseOneTask = discoveryTask(1)
+    _ = discovery.discover(in: snapshot([courseOneTask]), courseIDs: [7], hiddenIDs: [], now: now)
+    let newInOldCourse = discoveryTask(2)
+    let existingInNewCourse = discoveryTask(3, courseID: 8)
+    let changes = snapshot([courseOneTask, newInOldCourse, existingInNewCourse])
+    #expect(discovery.discover(in: changes, courseIDs: [7, 8], hiddenIDs: [], now: now).map(\.id) == [newInOldCourse.id])
+
+    discovery.selectCourses([7])
+    discovery.selectCourses([7, 8])
+    let backlog = discoveryTask(4, courseID: 8)
+    #expect(discovery.discover(in: snapshot([backlog]), courseIDs: [7, 8], hiddenIDs: [], now: now).isEmpty)
+    let fresh = discoveryTask(5, courseID: 8)
+    #expect(discovery.discover(in: snapshot([backlog, fresh]), courseIDs: [7, 8], hiddenIDs: [], now: now).map(\.id) == [fresh.id])
+}
+
+@Test func tasksEnteringTheDeadlineWindowDoNotLookNew() {
+    var discovery = SCELETaskDiscovery()
+    // The full inventory includes activities with distant deadlines or no deadline yet.
+    _ = discovery.discover(in: snapshot([], inventoryIDs: ["assignment-1"]), courseIDs: [7], hiddenIDs: [], now: now)
+    #expect(discovery.discover(in: snapshot([discoveryTask(1)]), courseIDs: [7], hiddenIDs: [], now: now).isEmpty)
+}
+
+@Test func hiddenSubmittedAndOverdueTasksStayQuietAndAreRemembered() {
+    var discovery = SCELETaskDiscovery()
+    _ = discovery.discover(in: snapshot([]), courseIDs: [7], hiddenIDs: [], now: now)
+    let tasks = [discoveryTask(1), discoveryTask(2, submission: .submitted),
+                 discoveryTask(3, deadline: now.addingTimeInterval(-60))]
+    #expect(discovery.discover(in: snapshot(tasks), courseIDs: [7], hiddenIDs: ["assignment-1"], now: now).isEmpty)
+    #expect(discovery.seenIDs == Set(tasks.map(\.id)))
+    #expect(discovery.discover(in: snapshot([discoveryTask(1)]), courseIDs: [7], hiddenIDs: [], now: now).isEmpty)
+}
+
+@Test func olderCachesMigrateToAQuietNotificationBaseline() throws {
+    let oldJSON = #"{"userID":44,"courses":[],"selectedCourseIDs":[7],"hiddenTaskIDs":[],"tasks":[],"statusFailureCount":0}"#
+    let cache = try JSONDecoder().decode(SCELECache.self, from: Data(oldJSON.utf8))
+    #expect(cache.discovery == nil)
+    var discovery = cache.discovery ?? SCELETaskDiscovery()
+    #expect(discovery.discover(in: snapshot([discoveryTask(1)]), courseIDs: [7], hiddenIDs: [], now: now).isEmpty)
+}
+
+@Test func syncIntervalChangesFreshnessAndReschedulesFromLastSuccess() {
+    let lastSync = now.addingTimeInterval(-150)
+    #expect(!SCELESyncInterval.isFresh(updatedAt: lastSync, now: now, minutes: 2))
+    #expect(SCELESyncInterval.isFresh(updatedAt: lastSync, now: now, minutes: 10))
+    #expect(SCELESyncInterval.nextDelay(updatedAt: lastSync, now: now, minutes: 10) == 450)
+    // Failed or missing refreshes retry at the configured interval, without a busy loop.
+    #expect(SCELESyncInterval.nextDelay(updatedAt: lastSync, now: now, minutes: 2) == 120)
+    #expect(SCELESyncInterval.nextDelay(updatedAt: nil, now: now, minutes: 15) == 900)
+    #expect(!SCELESyncInterval.isFresh(updatedAt: now.addingTimeInterval(60), now: now, minutes: 5))
+}
+
+@Test func invalidStoredIntervalsCannotCreateRapidPolling() {
+    #expect(SCELESyncInterval.seconds(0) == 60)
+    #expect(SCELESyncInterval.seconds(-20) == 60)
+    #expect(SCELESyncInterval.seconds(Int.max) == 86_400)
+}
+
+private func isoDate(_ value: String) throws -> Date {
+    try #require(ISO8601DateFormatter().date(from: value))
+}
+
+@Test func homeTasksFollowTheSelectedDayAndLocalMidnightBoundaries() throws {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = try #require(TimeZone(identifier: "Asia/Jakarta"))
+    let start = try isoDate("2026-11-02T00:00:00+07:00")
+    let end = try isoDate("2026-11-03T00:00:00+07:00")
+    let tasks = [discoveryTask(4, deadline: end), discoveryTask(3, deadline: end.addingTimeInterval(-1)),
+                 discoveryTask(1, deadline: start.addingTimeInterval(-1)), discoveryTask(2, deadline: start)]
+    let selected = SCELETask.onDay(start, calendar: calendar, tasks: tasks, selectedIDs: [7],
+                                   hiddenIDs: [], hideSubmitted: false)
+    #expect(selected.map(\.id) == ["assignment-2", "assignment-3"])
+    let followingDay = SCELETask.onDay(end, calendar: calendar, tasks: tasks, selectedIDs: [7],
+                                       hiddenIDs: [], hideSubmitted: false)
+    #expect(followingDay.map(\.id) == ["assignment-4"])
+}
+
+@Test func homeTasksHonorCourseHiddenAndSubmissionFilters() {
+    let calendar = Calendar(identifier: .gregorian)
+    let due = calendar.startOfDay(for: now).addingTimeInterval(3600)
+    let tasks = [discoveryTask(1, deadline: due), discoveryTask(2, submission: .draft, deadline: due),
+                 discoveryTask(3, courseID: 8, deadline: due), discoveryTask(4, submission: .submitted, deadline: due)]
+    let pending = SCELETask.onDay(due, calendar: calendar, tasks: tasks, selectedIDs: [7],
+                                  hiddenIDs: ["assignment-1"], hideSubmitted: true)
+    #expect(pending.map(\.id) == ["assignment-2"])
+    let all = SCELETask.onDay(due, calendar: calendar, tasks: tasks, selectedIDs: [7],
+                              hiddenIDs: ["assignment-1"], hideSubmitted: false)
+    #expect(all.map(\.id) == ["assignment-2", "assignment-4"])
+    #expect(SCELETask.onDay(due, calendar: calendar, tasks: tasks, selectedIDs: [],
+                            hiddenIDs: [], hideSubmitted: false).isEmpty)
+}
+
+@Test func dailyTasksUseCalendarDaysAcrossDaylightSavingChanges() throws {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = try #require(TimeZone(identifier: "America/New_York"))
+    let start = try isoDate("2025-03-09T00:00:00-05:00")
+    let end = try isoDate("2025-03-10T00:00:00-04:00")
+    let tasks = [discoveryTask(1, deadline: end.addingTimeInterval(-1)), discoveryTask(2, deadline: end)]
+    let result = SCELETask.onDay(start, calendar: calendar, tasks: tasks, selectedIDs: [7],
+                                 hiddenIDs: [], hideSubmitted: false)
+    #expect(result.map(\.id) == ["assignment-1"])
 }

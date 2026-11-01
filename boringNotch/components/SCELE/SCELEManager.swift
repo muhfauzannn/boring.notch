@@ -47,7 +47,7 @@ final class SCELEManager: ObservableObject {
             }
         } catch { errorMessage = error.localizedDescription }
 
-        Defaults.publisher(.sceleEnabled, options: [])
+        Defaults.publisher(keys: .sceleEnabled, .sceleSyncMinutes, options: [])
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 Task { @MainActor in self?.restartPolling() }
@@ -132,7 +132,8 @@ final class SCELEManager: ObservableObject {
     func refresh(force: Bool = false) async {
         guard Defaults[.sceleEnabled], let credential, !requiresSignIn, !isConnecting else { return }
         if let refreshTask { await refreshTask.value; return }
-        if !force, !needsRefresh, let updatedAt, Date().timeIntervalSince(updatedAt) < 300 { return }
+        if !force, !needsRefresh,
+           SCELESyncInterval.isFresh(updatedAt: updatedAt, minutes: Defaults[.sceleSyncMinutes]) { return }
         isRefreshing = true
         let operation = generation
         let selected = selectedCourseIDs
@@ -225,7 +226,9 @@ final class SCELEManager: ObservableObject {
         pollTask = Task { [weak self] in
             while !Task.isCancelled {
                 await self?.refresh()
-                do { try await Task.sleep(for: .seconds(300)) } catch { return }
+                let delay = SCELESyncInterval.nextDelay(updatedAt: self?.updatedAt,
+                                                        minutes: Defaults[.sceleSyncMinutes])
+                do { try await Task.sleep(for: .seconds(delay)) } catch { return }
             }
         }
     }
@@ -258,8 +261,17 @@ final class SCELEManager: ObservableObject {
     }
 
     private func announce(_ newTasks: [SCELETask]) {
-        guard Defaults[.sceleEnabled], Defaults[.sceleTaskNotifications], !newTasks.isEmpty else { return }
-        let combined = (pendingAnnouncement?.tasks ?? []) + newTasks
+        guard Defaults[.sceleEnabled], Defaults[.sceleTaskNotifications] else { return }
+        let current = Dictionary(tasks.map { ($0.id, $0) }, uniquingKeysWith: { _, latest in latest })
+        let queued = (pendingAnnouncement?.tasks ?? []).compactMap { original -> SCELETask? in
+            // Keep a manual preview until it is presented, independently of the task cache.
+            if original.instanceID == 0 { return original }
+            guard let task = current[original.id], selectedCourseIDs.contains(task.courseID),
+                  !hiddenTaskIDs.contains(task.id), !task.submission.isFinished, task.dueDate > Date() else { return nil }
+            return task
+        }
+        let combined = queued + newTasks
+        guard !combined.isEmpty else { pendingAnnouncement = nil; return }
         let unique = Dictionary(combined.map { ($0.id, $0) }, uniquingKeysWith: { _, latest in latest })
         pendingAnnouncement = SCELETaskAnnouncement(tasks: unique.values.sorted(by: SCELETask.deadlineOrder))
     }
@@ -268,8 +280,13 @@ final class SCELEManager: ObservableObject {
     func presentTaskAnnouncement() {
         guard Defaults[.sceleEnabled], Defaults[.sceleTaskNotifications],
               !BoringViewCoordinator.shared.expandingView.show, let pendingAnnouncement else { return }
-        activeAnnouncement = pendingAnnouncement
         self.pendingAnnouncement = nil
+        let eligible = pendingAnnouncement.tasks.filter {
+            $0.instanceID == 0 || (selectedCourseIDs.contains($0.courseID) && !hiddenTaskIDs.contains($0.id)
+                && !$0.submission.isFinished && $0.dueDate > Date())
+        }
+        guard !eligible.isEmpty else { return }
+        activeAnnouncement = SCELETaskAnnouncement(tasks: eligible)
         BoringViewCoordinator.shared.toggleExpandingView(status: true, type: .scele)
     }
 

@@ -2,6 +2,47 @@ import AppKit
 import Defaults
 import SwiftUI
 
+/// Two wings keep the message out from underneath the physical camera housing.
+struct SCELETaskBanner: View {
+    let announcement: SCELETaskAnnouncement
+    let closedNotchWidth: CGFloat
+
+    private var wingWidth: CGFloat { max(0, (640 - closedNotchWidth - 34) / 2) }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            HStack(spacing: 7) {
+                Image(systemName: "bell.badge.fill")
+                    .foregroundStyle(Color.effectiveAccent)
+                Text(announcement.tasks.count == 1 ? "New SCELE task" : "\(announcement.tasks.count) new SCELE tasks")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+            }
+            .frame(width: wingWidth, alignment: .leading)
+
+            Rectangle().fill(.black).frame(width: closedNotchWidth + 10)
+
+            if let task = announcement.tasks.first {
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text(task.title)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Text(task.courseName)
+                        .font(.system(size: 9))
+                        .foregroundStyle(.gray)
+                        .lineLimit(1)
+                }
+                .frame(width: wingWidth, alignment: .trailing)
+            }
+        }
+        .contentShape(Rectangle())
+        .help("Open Tasks to see new SCELE assignments and quizzes")
+        .accessibilityElement(children: .combine)
+    }
+}
+
 struct NotchSCELEView: View {
     @EnvironmentObject var vm: BoringViewModel
     @ObservedObject private var manager = SCELEManager.shared

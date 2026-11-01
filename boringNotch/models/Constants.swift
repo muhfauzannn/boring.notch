@@ -98,6 +98,8 @@ extension Defaults.Keys {
     static let sceleEnabled = Key<Bool>("sceleEnabled", default: true)
     static let sceleHideSubmitted = Key<Bool>("sceleHideSubmitted", default: true)
     static let sceleTaskNotifications = Key<Bool>("sceleTaskNotifications", default: true)
+    static let sceleSyncMinutes = Key<Int>("sceleSyncMinutes", default: 5)
+    static let sceleShowInCalendar = Key<Bool>("sceleShowInCalendar", default: true)
 
     // MARK: General
     static let menubarIcon = Key<Bool>("menubarIcon", default: true)

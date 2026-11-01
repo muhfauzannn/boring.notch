@@ -24,6 +24,7 @@ struct ContentView: View {
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
     @ObservedObject var pomodoro = PomodoroManager.shared
+    @ObservedObject private var sceleManager = SCELEManager.shared
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
     @State private var anyDropDebounceTask: Task<Void, Never>?
@@ -76,6 +77,10 @@ struct ContentView: View {
             && vm.notchState == .closed
         {
             chinWidth = 640
+        } else if coordinator.expandingView.type == .scele && coordinator.expandingView.show
+            && vm.notchState == .closed && !vm.hideOnClosed
+        {
+            chinWidth = 640
         } else if showFocusLiveActivity {
             chinWidth += (2 * focusLiveActivitySideWidth + 20)
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
@@ -99,6 +104,11 @@ struct ContentView: View {
             && coordinator.sneakPeek.type != .music && coordinator.sneakPeek.type != .battery
         return vm.notchState == .closed && !vm.hideOnClosed && !coordinator.expandingView.show
             && !inlineHUDShowing && pomodoro.isActive && pomodoroEnabled && pomodoroShowInClosedNotch
+    }
+
+    private var canPresentSCELEAnnouncement: Bool {
+        sceleManager.pendingAnnouncement != nil && vm.notchState == .closed && !vm.hideOnClosed
+            && !coordinator.helloAnimationRunning && !coordinator.expandingView.show && !coordinator.sneakPeek.show
     }
 
     /// The line for the strip under the closed notch; nil hides the strip (also during instrumental breaks).
@@ -189,6 +199,11 @@ struct ContentView: View {
                         }
                     }
                     .onChange(of: vm.notchState) { _, newState in
+                        if newState == .open && coordinator.expandingView.type == .scele
+                            && coordinator.expandingView.show && sceleManager.activeAnnouncement != nil {
+                            if !vm.anyDropZoneTargeting { coordinator.currentView = .tasks }
+                            sceleManager.dismissTaskAnnouncement()
+                        }
                         if newState == .closed && isHovering {
                             withAnimation {
                                 isHovering = false
@@ -242,6 +257,9 @@ struct ContentView: View {
         .background(dragDetector)
         .preferredColorScheme(.dark)
         .environmentObject(vm)
+        .onChange(of: canPresentSCELEAnnouncement, initial: true) { _, canPresent in
+            if canPresent { sceleManager.presentTaskAnnouncement() }
+        }
         .onChange(of: vm.anyDropZoneTargeting) { _, isTargeted in
             anyDropDebounceTask?.cancel()
 
@@ -322,6 +340,12 @@ struct ContentView: View {
                                   && vm.notchState == .closed
                       {
                           FocusFinishedBanner(closedNotchWidth: vm.closedNotchSize.width)
+                              .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
+                      } else if coordinator.expandingView.type == .scele && coordinator.expandingView.show
+                                  && vm.notchState == .closed && !vm.hideOnClosed,
+                                  let announcement = sceleManager.activeAnnouncement
+                      {
+                          SCELETaskBanner(announcement: announcement, closedNotchWidth: vm.closedNotchSize.width)
                               .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
                       } else if coordinator.sneakPeek.show && Defaults[.inlineHUD] && (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && vm.notchState == .closed {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
