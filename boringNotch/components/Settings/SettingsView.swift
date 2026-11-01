@@ -1669,7 +1669,7 @@ struct Appearance: View {
                     Text("Square")
                         .tag(MirrorShapeEnum.rectangle)
                 }
-                Toggle("Show cat eyes while idle", isOn: $showIdleCatEyes)
+                Toggle("Show simple eyes while idle", isOn: $showIdleCatEyes)
                 if showIdleCatEyes {
                     HStack {
                         Text("Preview")
@@ -1678,7 +1678,7 @@ struct Appearance: View {
                             .background(.black, in: RoundedRectangle(cornerRadius: 8))
                     }
                 }
-                Text("A quiet blink and a little glance while the notch is idle. Music, timers and notifications take priority. Respects Reduce Motion.")
+                Text("Two simple white eyes with a quiet blink while idle. Music, timers and notifications take priority. Respects Reduce Motion.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {

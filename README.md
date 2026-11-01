@@ -105,9 +105,9 @@ brew install --cask TheBoredTeam/boring-notch/boring-notch
 - Use the controls to manage your music like a rockstar.
 - Click the star in your menu bar to customize your notch to your heart's content.
 
-### Idle cat eyes
+### Idle eyes
 
-When the notch is idle, a pair of mint-green cat eyes rests beside the camera housing, with gentle glances, blinks, an occasional double blink and one slower sleepy blink. Toggle **Settings → Appearance → Show cat eyes while idle**, where a small preview is also available. Music, Focus and notifications take priority. The animation stops when hidden or the screen sleeps, and Reduce Motion shows a still pair of eyes.
+When the notch is idle, two small white capsule eyes rest beside the camera housing, with quiet blinks and tiny glances. Toggle **Settings → Appearance → Show simple eyes while idle**, where a small preview is also available. Music, Focus and notifications take priority. The animation stops when hidden or the screen sleeps, and Reduce Motion shows still eyes.
 
 ### SCELE tasks
 

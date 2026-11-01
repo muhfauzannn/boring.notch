@@ -1429,6 +1429,9 @@
     "A new length applies the next time a phase starts." : {
 
     },
+    "A quiet blink and a little glance while the notch is idle. Music, timers and notifications take priority. Respects Reduce Motion." : {
+
+    },
     "A shortcut to open the clipboard history can be set in Shortcuts." : {
 
     },
@@ -16852,6 +16855,9 @@
         }
       }
     },
+    "Preview" : {
+
+    },
     "Preview notch notification" : {
 
     },
@@ -19536,7 +19542,11 @@
         }
       }
     },
+    "Show cat eyes while idle" : {
+
+    },
     "Show cool face animation while inactive" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

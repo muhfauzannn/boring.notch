@@ -111,20 +111,21 @@
 ### Where the code is
 - **Platform:** native SwiftUI, macOS 14+.
 - **Motion engine:** `../animations/IdleCatMotion.swift`, copied from the skill's SwiftUI engine with `Idle`-prefixed names to keep the app namespace clear.
-- **Art:** `AnimatedFace.swift`; two independent almond-shaped eyes in one Canvas, with a black gap for the physical camera housing. Each eye is drawn in its own bounding rectangle; pupils and highlights are clipped to that eye.
+- **Art:** `AnimatedFace.swift`; two small white capsule eyes in one Canvas, with a black gap for the physical camera housing. No iris, pupils, gradient, outline or highlights.
 - **Existing transitions:** `../ContentView.swift` owns the notch's expansion and its activity priority. The eye animation never changes those dimensions.
 
 ### The owner's rules
 - 2026-11-01: “saat idle, saya ingin di notch nya seperti mata kucing gitu, yang nutup2 dan ada gerak dikit yang lucu”.
-- Use small glances, occasional blinks/double blinks, one slow sleepy blink and a slight squint. No bouncing, flashing, text or sound.
+- 2026-11-02: The cat eyes looked frightening. The owner asked for something simple, with `https://x.ai/bot` as a loose reference.
+- Use plain white rounded capsules, tiny glances and occasional short blinks. No animal anatomy, double blinks, sleepy squints, bouncing, flashing, text or sound.
 
 ### Rig limits
 - Draw outside the physical notch: one eye in each wing. Do not draw across the camera housing.
-- Keep the entire footprint fixed while pupils and lids move.
+- Keep the entire footprint fixed while the two capsules glance and flatten for a blink.
 - Idle eyes yield to music, Focus, HUDs and notifications. The old repeating Timer face has been removed.
 - One clock drives the pair. Remove it when the idle branch is not visible; pause for screen sleep, inactive login sessions and Reduce Motion.
 - This is a menu bar app: another foreground application does not make the notch invisible. Do not pause solely because the app is not key or its scene is inactive.
-- The first and last frame of the 24-second choreography must match. Blink closing is faster than reopening; no per-frame random values.
+- The first and last frame of the 12-second choreography must match. Blink closing is faster than reopening; no per-frame random values.
 
 ### How changes are checked
 - Build the `boringNotch` Xcode scheme for macOS.
