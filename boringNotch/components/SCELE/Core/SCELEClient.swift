@@ -50,6 +50,10 @@ struct SCELEClient: Sendable {
                                                         parameters: parameters)
         async let quizzes = quizzes(using: credential, parameters: parameters)
         let (assignmentResponse, quizResponse) = try await (assignments, quizzes)
+        var inventoryIDs = Set(assignmentResponse.courses.filter { selectedIDs.contains($0.id) }.flatMap {
+            $0.assignments.map { "assignment-\($0.id)" }
+        })
+        inventoryIDs.formUnion(quizResponse.quizzes.filter { selectedIDs.contains($0.course) }.map { "quiz-\($0.id)" })
         let names = Dictionary(uniqueKeysWithValues: selected.map { ($0.id, $0.title) })
         var tasks = assignmentResponse.courses.flatMap { course in
             course.assignments.compactMap { assignment -> SCELETask? in
@@ -83,7 +87,8 @@ struct SCELEClient: Sendable {
                 if failed { failures += 1 }
             }
         }
-        return SCELETaskResult(tasks: enriched.sorted(by: SCELETask.deadlineOrder), statusFailureCount: failures)
+        return SCELETaskResult(tasks: enriched.sorted(by: SCELETask.deadlineOrder), statusFailureCount: failures,
+                               inventoryIDs: inventoryIDs)
     }
 
     private func quizzes(using credential: SCELECredential, parameters: [String: String]) async throws -> QuizResponse {

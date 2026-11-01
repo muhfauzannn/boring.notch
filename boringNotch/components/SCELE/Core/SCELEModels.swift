@@ -90,11 +90,51 @@ struct SCELECache: Codable, Sendable {
     var tasks: [SCELETask]
     var updatedAt: Date?
     var statusFailureCount: Int
+    // Optional for caches written before new-task notifications were introduced.
+    var discovery: SCELETaskDiscovery? = nil
 }
 
 struct SCELETaskResult: Sendable {
     let tasks: [SCELETask]
     let statusFailureCount: Int
+    let inventoryIDs: Set<String>
+
+    init(tasks: [SCELETask], statusFailureCount: Int, inventoryIDs: Set<String> = []) {
+        self.tasks = tasks
+        self.statusFailureCount = statusFailureCount
+        self.inventoryIDs = inventoryIDs
+    }
+}
+
+/// A durable baseline per course, separate from the rolling deadline list.
+/// A previously known activity entering the 60-day window is not a newly published task.
+struct SCELETaskDiscovery: Codable, Sendable {
+    private(set) var seenIDs: Set<String> = []
+    private(set) var baselinedCourseIDs: Set<Int> = []
+
+    mutating func selectCourses(_ ids: Set<Int>) {
+        // Re-selecting a course should establish a fresh baseline, without announcing its backlog.
+        baselinedCourseIDs.formIntersection(ids)
+    }
+
+    mutating func discover(in result: SCELETaskResult, courseIDs: Set<Int>, hiddenIDs: Set<String>,
+                           now: Date = Date()) -> [SCELETask] {
+        let newTasks = result.tasks.filter {
+            courseIDs.contains($0.courseID) && baselinedCourseIDs.contains($0.courseID)
+                && !seenIDs.contains($0.id) && !hiddenIDs.contains($0.id)
+                && !$0.submission.isFinished && $0.dueDate > now
+        }
+        seenIDs.formUnion(result.inventoryIDs)
+        seenIDs.formUnion(result.tasks.map(\.id))
+        baselinedCourseIDs.formIntersection(courseIDs)
+        baselinedCourseIDs.formUnion(courseIDs)
+        return newTasks.sorted(by: SCELETask.deadlineOrder)
+    }
+}
+
+struct SCELETaskAnnouncement: Identifiable, Equatable, Sendable {
+    let id = UUID()
+    let tasks: [SCELETask]
 }
 
 enum SCELEError: Error, LocalizedError, Equatable, Sendable {

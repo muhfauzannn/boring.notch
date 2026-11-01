@@ -18,6 +18,8 @@ final class SCELEManager: ObservableObject {
     @Published private(set) var statusFailureCount = 0
     @Published private(set) var accountName: String?
     @Published private(set) var username = ""
+    @Published private(set) var pendingAnnouncement: SCELETaskAnnouncement?
+    @Published private(set) var activeAnnouncement: SCELETaskAnnouncement?
 
     var isConnected: Bool { credential != nil }
 
@@ -25,6 +27,7 @@ final class SCELEManager: ObservableObject {
     private let credentials = SCELECredentialStore()
     private let cache = SCELECacheStore()
     private var credential: SCELECredential?
+    private var discovery = SCELETaskDiscovery()
     private var generation = UUID()
     private var needsRefresh = false
     private var needsInitialSelection = false
@@ -48,6 +51,14 @@ final class SCELEManager: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 Task { @MainActor in self?.restartPolling() }
+            }
+            .store(in: &cancellables)
+        Defaults.publisher(.sceleTaskNotifications, options: [])
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] change in
+                Task { @MainActor in
+                    if !change.newValue { self?.clearTaskAnnouncements() }
+                }
             }
             .store(in: &cancellables)
         restartPolling()
@@ -77,6 +88,8 @@ final class SCELEManager: ObservableObject {
                 hiddenTaskIDs = []
                 tasks = []
                 updatedAt = nil
+                discovery = SCELETaskDiscovery()
+                clearTaskAnnouncements()
             }
             needsInitialSelection = false
             selectedCourseIDs.formIntersection(Set(enrolled.map(\.id)))
@@ -99,6 +112,8 @@ final class SCELEManager: ObservableObject {
         pollTask = nil
         selectionTask?.cancel()
         credential = nil
+        discovery = SCELETaskDiscovery()
+        clearTaskAnnouncements()
         needsInitialSelection = false
         accountName = nil
         username = ""
@@ -136,6 +151,8 @@ final class SCELEManager: ObservableObject {
                 guard let self, self.generation == operation, !Task.isCancelled else { return }
                 self.courses = enrolled
                 self.selectedCourseIDs = effectiveSelection
+                let newTasks = self.discovery.discover(in: result, courseIDs: effectiveSelection,
+                                                        hiddenIDs: self.hiddenTaskIDs)
                 self.tasks = result.tasks
                 self.statusFailureCount = result.statusFailureCount
                 self.updatedAt = Date()
@@ -143,6 +160,7 @@ final class SCELEManager: ObservableObject {
                 self.needsInitialSelection = false
                 self.errorMessage = nil
                 self.persist()
+                self.announce(newTasks)
             } catch {
                 guard let self, self.generation == operation, !Task.isCancelled else { return }
                 self.errorMessage = error.localizedDescription
@@ -182,6 +200,8 @@ final class SCELEManager: ObservableObject {
     }
 
     private func selectionChanged() {
+        discovery.selectCourses(selectedCourseIDs)
+        clearTaskAnnouncements()
         needsInitialSelection = false
         invalidateRefresh()
         needsRefresh = true
@@ -197,6 +217,7 @@ final class SCELEManager: ObservableObject {
         pollTask?.cancel()
         invalidateRefresh()
         guard Defaults[.sceleEnabled] else {
+            clearTaskAnnouncements()
             if BoringViewCoordinator.shared.currentView == .tasks { BoringViewCoordinator.shared.currentView = .home }
             return
         }
@@ -223,6 +244,7 @@ final class SCELEManager: ObservableObject {
         tasks = saved.tasks
         updatedAt = saved.updatedAt
         statusFailureCount = saved.statusFailureCount
+        discovery = saved.discovery ?? SCELETaskDiscovery()
     }
 
     private func persist() {
@@ -230,7 +252,45 @@ final class SCELEManager: ObservableObject {
         do {
             try cache.save(SCELECache(userID: credential.userID, courses: courses,
                                       selectedCourseIDs: selectedCourseIDs, hiddenTaskIDs: hiddenTaskIDs,
-                                      tasks: tasks, updatedAt: updatedAt, statusFailureCount: statusFailureCount))
+                                      tasks: tasks, updatedAt: updatedAt, statusFailureCount: statusFailureCount,
+                                      discovery: discovery))
         } catch { errorMessage = "Tasks are available, but they could not be saved for offline use." }
+    }
+
+    private func announce(_ newTasks: [SCELETask]) {
+        guard Defaults[.sceleEnabled], Defaults[.sceleTaskNotifications], !newTasks.isEmpty else { return }
+        let combined = (pendingAnnouncement?.tasks ?? []) + newTasks
+        let unique = Dictionary(combined.map { ($0.id, $0) }, uniquingKeysWith: { _, latest in latest })
+        pendingAnnouncement = SCELETaskAnnouncement(tasks: unique.values.sorted(by: SCELETask.deadlineOrder))
+    }
+
+    /// ContentView calls this only when a visible, closed notch is free to show the banner.
+    func presentTaskAnnouncement() {
+        guard Defaults[.sceleEnabled], Defaults[.sceleTaskNotifications],
+              !BoringViewCoordinator.shared.expandingView.show, let pendingAnnouncement else { return }
+        activeAnnouncement = pendingAnnouncement
+        self.pendingAnnouncement = nil
+        BoringViewCoordinator.shared.toggleExpandingView(status: true, type: .scele)
+    }
+
+    func dismissTaskAnnouncement() {
+        activeAnnouncement = nil
+        let coordinator = BoringViewCoordinator.shared
+        if coordinator.expandingView.type == .scele && coordinator.expandingView.show {
+            coordinator.toggleExpandingView(status: false, type: .scele)
+        }
+    }
+
+    func previewTaskNotification() {
+        let sample = SCELETask(instanceID: 0, moduleID: 0, courseID: 0, courseName: "SCELE",
+                               title: "A new assignment is available", kind: .assignment,
+                               dueDate: Date().addingTimeInterval(86_400), submission: .notSubmitted)
+        // Previewing never changes the persisted baseline or makes a request to Moodle.
+        announce([sample])
+    }
+
+    private func clearTaskAnnouncements() {
+        pendingAnnouncement = nil
+        dismissTaskAnnouncement()
     }
 }

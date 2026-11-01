@@ -701,6 +701,16 @@
         }
       }
     },
+    "%@\n%@\n%@ · WIB" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@\n%2$@\n%3$@ · WIB"
+          }
+        }
+      }
+    },
     "%@ · %@" : {
       "localizations" : {
         "en" : {
@@ -723,6 +733,16 @@
     },
     "%@ focused" : {
 
+    },
+    "%@, %@, %@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@, %3$@, %4$@"
+          }
+        }
+      }
     },
     "%d%%" : {
       "localizations" : {
@@ -956,6 +976,9 @@
           }
         }
       }
+    },
+    "%lld selected" : {
+
     },
     "%lld%%" : {
       "localizations" : {
@@ -1795,6 +1818,9 @@
           }
         }
       }
+    },
+    "Account" : {
+
     },
     "Add" : {
       "localizations" : {
@@ -2917,6 +2943,9 @@
           }
         }
       }
+    },
+    "Assignments and quizzes from scele.cs.ui.ac.id. Updates every 5 minutes while enabled." : {
+
     },
     "Auto-scroll to next event" : {
       "localizations" : {
@@ -5130,6 +5159,9 @@
         }
       }
     },
+    "Choose courses" : {
+
+    },
     "Choose which service to use when sharing files from the shelf. Click the shelf button to select files, or drag files onto it to share immediately." : {
       "localizations" : {
         "ar" : {
@@ -5331,6 +5363,9 @@
       }
     },
     "Claude Keychain access" : {
+
+    },
+    "Clear" : {
 
     },
     "Clear clipboard history?" : {
@@ -6057,6 +6092,12 @@
         }
       }
     },
+    "Connect SCELE" : {
+
+    },
+    "Connect SCELE to see assignments and quizzes here." : {
+
+    },
     "Continue" : {
       "localizations" : {
         "ar" : {
@@ -6377,6 +6418,12 @@
           }
         }
       }
+    },
+    "Courses" : {
+
+    },
+    "Current courses" : {
+
     },
     "Currently selected: %@" : {
       "localizations" : {
@@ -7586,6 +7633,9 @@
           }
         }
       }
+    },
+    "Disconnect" : {
+
     },
     "Download" : {
       "localizations" : {
@@ -9711,6 +9761,9 @@
         }
       }
     },
+    "Find a course" : {
+
+    },
     "Finish" : {
       "localizations" : {
         "ar" : {
@@ -11029,6 +11082,9 @@
         }
       }
     },
+    "Hide from notch" : {
+
+    },
     "Hide from screen recording" : {
       "localizations" : {
         "ar" : {
@@ -11130,6 +11186,9 @@
       }
     },
     "Hide lyrics" : {
+
+    },
+    "Hide submitted assignments and finished quiz attempts" : {
 
     },
     "Hide title bar" : {
@@ -12155,6 +12214,12 @@
 
     },
     "Keep up to" : {
+
+    },
+    "Last successful sync. Deadlines use Jakarta time (WIB)." : {
+
+    },
+    "Last synced" : {
 
     },
     "Layout Preview" : {
@@ -15915,6 +15980,9 @@
     "Open Image" : {
 
     },
+    "Open in SCELE" : {
+
+    },
     "Open Link" : {
 
     },
@@ -16420,6 +16488,9 @@
           }
         }
       }
+    },
+    "Password" : {
+
     },
     "Password managers mark what they copy as private, so it isn't saved. Anything copied while an app on this list is in front is skipped too." : {
 
@@ -17255,6 +17326,9 @@
 
     },
     "Refresh now" : {
+
+    },
+    "Refresh tasks" : {
 
     },
     "Release name" : {
@@ -18367,6 +18441,9 @@
     "Restore Defaults" : {
 
     },
+    "Restore hidden tasks (%lld)" : {
+
+    },
     "Resume" : {
 
     },
@@ -18477,6 +18554,12 @@
         }
       }
     },
+    "SCELE" : {
+
+    },
+    "SCELE settings and courses" : {
+
+    },
     "Select the music source you want to use. You can change this later in the app settings." : {
       "localizations" : {
         "ar" : {
@@ -18576,6 +18659,9 @@
           }
         }
       }
+    },
+    "Select your courses. For courses shared by several classes, right-click a task in the notch and choose “Hide from notch” to hide another class’s deadline." : {
+
     },
     "selected" : {
       "localizations" : {
@@ -20620,10 +20706,22 @@
         }
       }
     },
+    "Show tasks" : {
+
+    },
+    "Show Tasks tab" : {
+
+    },
     "Show the current lyric under the closed notch" : {
 
     },
     "Show warning in closed notch" : {
+
+    },
+    "Shows deadlines for the next 60 days and overdue work from the last 7 days. Times in the notch use WIB. A finished quiz attempt may still allow another attempt." : {
+
+    },
+    "Sign in again" : {
 
     },
     "Skip to %@" : {
@@ -21028,6 +21126,9 @@
           }
         }
       }
+    },
+    "Some submission statuses could not be read. Those deadlines remain visible with “Status unavailable”." : {
+
     },
     "Sound when a phase ends" : {
 
@@ -21654,6 +21755,9 @@
           }
         }
       }
+    },
+    "Tasks" : {
+
     },
     "Text" : {
 
@@ -22877,6 +22981,9 @@
         }
       }
     },
+    "Username" : {
+
+    },
     "Using System Accent" : {
       "localizations" : {
         "ar" : {
@@ -23882,6 +23989,12 @@
           }
         }
       }
+    },
+    "Your access token is stored in macOS Keychain. Your password is only used to sign in." : {
+
+    },
+    "Your campus deadlines, at a glance" : {
+
     },
     "Your macOS system accent color" : {
       "localizations" : {
