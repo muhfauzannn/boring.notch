@@ -18,18 +18,8 @@ struct SCELESettings: View {
                 Text("Assignments and quizzes from scele.cs.ui.ac.id.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                LabeledContent("Sync interval") {
-                    HStack(spacing: 6) {
-                        TextField("Minutes", value: intervalBinding, format: .number.grouping(.never))
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 55)
-                            .accessibilityLabel("Sync interval in minutes")
-                        Text("min").foregroundStyle(.secondary)
-                        Stepper("Sync interval", value: intervalBinding, in: SCELESyncInterval.minuteRange)
-                            .labelsHidden()
-                    }
-                }
-                .disabled(manager.isConnecting)
+                SCELESyncIntervalRow(minutes: $syncMinutes)
+                    .disabled(manager.isConnecting)
                 Text("Choose 1–1440 minutes. Changes apply immediately while SCELE is enabled. You can also refresh manually.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -144,15 +134,43 @@ struct SCELESettings: View {
             || $0.subtitle.localizedCaseInsensitiveContains(search) }
     }
 
-    private var intervalBinding: Binding<Int> {
-        Binding(get: { SCELESyncInterval.minutes(syncMinutes) }, set: { syncMinutes = SCELESyncInterval.minutes($0) })
-    }
-
     private func connect() {
         guard !password.isEmpty, !username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               !manager.isConnecting else { return }
         let signInPassword = password
         password = ""
         Task { await manager.connect(username: username, password: signInPassword) }
+    }
+}
+
+struct SCELESyncIntervalRow: View {
+    @Binding var minutes: Int
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text("Sync interval")
+                .fixedSize(horizontal: true, vertical: false)
+            Spacer(minLength: 8)
+            HStack(spacing: 6) {
+                TextField("Minutes", value: intervalBinding, format: .number.grouping(.never))
+                    .labelsHidden()
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.trailing)
+                    .frame(width: 64)
+                    .accessibilityLabel("Sync interval in minutes")
+                Text("min")
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
+                Stepper("Sync interval", value: intervalBinding, in: SCELESyncInterval.minuteRange)
+                    .labelsHidden()
+                    .fixedSize()
+            }
+            .fixedSize(horizontal: true, vertical: false)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var intervalBinding: Binding<Int> {
+        Binding(get: { SCELESyncInterval.minutes(minutes) }, set: { minutes = SCELESyncInterval.minutes($0) })
     }
 }

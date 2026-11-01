@@ -1445,6 +1445,7 @@ struct Appearance: View {
     @Default(.useMusicVisualizer) var useMusicVisualizer
     @Default(.customVisualizers) var customVisualizers
     @Default(.selectedVisualizer) var selectedVisualizer
+    @Default(.showNotHumanFace) private var showIdleCatEyes
 
     let icons: [String] = ["logo2"]
     @State private var selectedIcon: String = "logo2"
@@ -1668,9 +1669,18 @@ struct Appearance: View {
                     Text("Square")
                         .tag(MirrorShapeEnum.rectangle)
                 }
-                Defaults.Toggle(key: .showNotHumanFace) {
-                    Text("Show cool face animation while inactive")
+                Toggle("Show cat eyes while idle", isOn: $showIdleCatEyes)
+                if showIdleCatEyes {
+                    HStack {
+                        Text("Preview")
+                        Spacer()
+                        IdleCatEyesView(notchWidth: 38, wingWidth: 34, height: 30)
+                            .background(.black, in: RoundedRectangle(cornerRadius: 8))
+                    }
                 }
+                Text("A quiet blink and a little glance while the notch is idle. Music, timers and notifications take priority. Respects Reduce Motion.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             } header: {
                 HStack {
                     Text("Additional features")

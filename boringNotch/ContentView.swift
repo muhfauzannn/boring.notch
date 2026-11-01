@@ -88,11 +88,8 @@ struct ContentView: View {
             && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
         {
             chinWidth += (2 * max(0, vm.effectiveClosedNotchHeight - 12) + 20)
-        } else if !coordinator.expandingView.show && vm.notchState == .closed
-            && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace]
-            && !vm.hideOnClosed
-        {
-            chinWidth += (2 * max(0, vm.effectiveClosedNotchHeight - 12) + 20)
+        } else if showIdleCatEyes {
+            chinWidth += idleCatWingWidth * 2 + 10
         }
 
         return chinWidth
@@ -104,6 +101,15 @@ struct ContentView: View {
             && coordinator.sneakPeek.type != .music && coordinator.sneakPeek.type != .battery
         return vm.notchState == .closed && !vm.hideOnClosed && !coordinator.expandingView.show
             && !inlineHUDShowing && pomodoro.isActive && pomodoroEnabled && pomodoroShowInClosedNotch
+    }
+
+    private var idleCatWingWidth: CGFloat { min(42, max(28, vm.effectiveClosedNotchHeight + 6)) }
+
+    private var showIdleCatEyes: Bool {
+        vm.notchState == .closed && vm.effectiveClosedNotchHeight > 0 && !vm.hideOnClosed
+            && showNotHumanFace && !coordinator.helloAnimationRunning && !coordinator.expandingView.show
+            && !coordinator.sneakPeek.show && !showFocusLiveActivity
+            && !musicManager.isPlaying && musicManager.isPlayerIdle
     }
 
     private var canPresentSCELEAnnouncement: Bool {
@@ -364,7 +370,7 @@ struct ContentView: View {
                               }
                           }
                           .frame(alignment: .center)
-                      } else if !coordinator.expandingView.show && vm.notchState == .closed && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace] && !vm.hideOnClosed  {
+                      } else if showIdleCatEyes {
                           BoringFaceAnimation()
                        } else if vm.notchState == .open {
                            BoringHeader()
@@ -446,23 +452,8 @@ struct ContentView: View {
 
     @ViewBuilder
     func BoringFaceAnimation() -> some View {
-        HStack {
-            HStack {
-                Rectangle()
-                    .fill(.clear)
-                    .frame(
-                        width: max(0, vm.effectiveClosedNotchHeight - 12),
-                        height: max(0, vm.effectiveClosedNotchHeight - 12)
-                    )
-                Rectangle()
-                    .fill(.black)
-                    .frame(width: vm.closedNotchSize.width - 20)
-                MinimalFaceFeatures()
-            }
-        }.frame(
-            height: vm.effectiveClosedNotchHeight,
-            alignment: .center
-        )
+        IdleCatEyesView(notchWidth: vm.closedNotchSize.width, wingWidth: idleCatWingWidth,
+                        height: vm.effectiveClosedNotchHeight)
     }
 
     @ViewBuilder

@@ -160,6 +160,7 @@
 		817F2BBD91B6C7804D1C433D /* SCELEManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D536E0C506D283419A40643 /* SCELEManager.swift */; };
 		A7AF43A8E598ECD5C7102FCE /* NotchSCELEView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F3E5187D2B6CEC9E43BB49B /* NotchSCELEView.swift */; };
 		C8097DE1DEEA5E21BB29FB51 /* SCELESettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF95D97848E8548B9566CD5A /* SCELESettings.swift */; };
+		E492312A558B6399CF8AC844 /* IdleCatMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD82062567E5CAA3F14D9C22 /* IdleCatMotion.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -343,6 +344,7 @@
 		6D536E0C506D283419A40643 /* SCELEManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SCELEManager.swift; sourceTree = "<group>"; };
 		8F3E5187D2B6CEC9E43BB49B /* NotchSCELEView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchSCELEView.swift; sourceTree = "<group>"; };
 		BF95D97848E8548B9566CD5A /* SCELESettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SCELESettings.swift; sourceTree = "<group>"; };
+		BD82062567E5CAA3F14D9C22 /* IdleCatMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleCatMotion.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -653,6 +655,7 @@
 			isa = PBXGroup;
 			children = (
 				14D570B82C5E98A20011E668 /* drop.swift */,
+				BD82062567E5CAA3F14D9C22 /* IdleCatMotion.swift */,
 				14A7E5872C64A89C008C1BE9 /* HelloAnimation.swift */,
 			);
 			path = animations;
@@ -1027,6 +1030,7 @@
 				B1C448962C9712C4001F0858 /* ActionBar.swift in Sources */,
 				118EBE312E9717DB00D54B5A /* URL+SecurityScoped.swift in Sources */,
 				1132E5162E777C140068732D /* YouTubeMusicAuthentication.swift in Sources */,
+				E492312A558B6399CF8AC844 /* IdleCatMotion.swift in Sources */,
 				14A7E5882C64A89C008C1BE9 /* HelloAnimation.swift in Sources */,
 				111BEA612ED09B1B0079DD4E /* NSScreen+UUID.swift in Sources */,
 				1153BD8F2D986B1F00979FB0 /* MediaControllerProtocol.swift in Sources */,

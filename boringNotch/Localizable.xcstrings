@@ -711,6 +711,16 @@
         }
       }
     },
+    "%@\nSCELE · %@\n%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@\nSCELE · %2$@\n%3$@"
+          }
+        }
+      }
+    },
     "%@ · %@" : {
       "localizations" : {
         "en" : {
@@ -966,6 +976,9 @@
           }
         }
       }
+    },
+    "%lld new SCELE tasks" : {
+
     },
     "%lld of %lld sessions done" : {
       "localizations" : {
@@ -2944,7 +2957,10 @@
         }
       }
     },
-    "Assignments and quizzes from scele.cs.ui.ac.id. Updates every 5 minutes while enabled." : {
+    "Assignments and quizzes appear on their due date with an orange marker and a SCELE label. Home uses your Mac’s time zone." : {
+
+    },
+    "Assignments and quizzes from scele.cs.ui.ac.id." : {
 
     },
     "Auto-scroll to next event" : {
@@ -4858,6 +4874,9 @@
           }
         }
       }
+    },
+    "Choose 1–1440 minutes. Changes apply immediately while SCELE is enabled. You can also refresh manually." : {
+
     },
     "Choose a Music Source" : {
       "localizations" : {
@@ -14049,6 +14068,9 @@
     "min" : {
 
     },
+    "Minutes" : {
+
+    },
     "Mirror" : {
       "localizations" : {
         "ar" : {
@@ -14852,6 +14874,9 @@
     "New copies aren't being saved." : {
 
     },
+    "New SCELE task" : {
+
+    },
     "No custom animation available" : {
       "localizations" : {
         "ar" : {
@@ -15053,6 +15078,7 @@
       }
     },
     "No events" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -15153,6 +15179,7 @@
       }
     },
     "No events today" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -15862,6 +15889,12 @@
     "Nothing yet" : {
 
     },
+    "Notifications" : {
+
+    },
+    "Notify in the notch about new tasks" : {
+
+    },
     "now" : {
 
     },
@@ -16386,6 +16419,9 @@
         }
       }
     },
+    "Open Tasks to see new SCELE assignments and quizzes" : {
+
+    },
     "Opens the shelf on its Clipboard side, on the screen the pointer is on. Press it again to close." : {
 
     },
@@ -16815,6 +16851,9 @@
           }
         }
       }
+    },
+    "Preview notch notification" : {
+
     },
     "Privacy" : {
 
@@ -18555,6 +18594,9 @@
       }
     },
     "SCELE" : {
+
+    },
+    "SCELE · %@" : {
 
     },
     "SCELE settings and courses" : {
@@ -20506,6 +20548,9 @@
         }
       }
     },
+    "Show SCELE deadlines in the Home calendar" : {
+
+    },
     "Show settings icon in notch" : {
       "localizations" : {
         "ar" : {
@@ -20718,7 +20763,10 @@
     "Show warning in closed notch" : {
 
     },
-    "Shows deadlines for the next 60 days and overdue work from the last 7 days. Times in the notch use WIB. A finished quiz attempt may still allow another attempt." : {
+    "Shows a short banner when a sync finds a new assignment or quiz in your selected courses. The first sync and newly selected courses stay quiet. Hover or click the banner to open Tasks." : {
+
+    },
+    "Shows deadlines for the next 60 days and overdue work from the last 7 days. Times in the Tasks tab use WIB. A finished quiz attempt may still allow another attempt." : {
 
     },
     "Sign in again" : {
@@ -21552,6 +21600,12 @@
           }
         }
       }
+    },
+    "Sync interval" : {
+
+    },
+    "Sync interval in minutes" : {
+
     },
     "Synced lyrics come from LRCLIB, a free community database, so some songs have no timed lyrics. Use the lyrics button in the notch header (or add it to the media controls) to switch Home to lyrics. Move the timing slider right if lyrics lag behind the music." : {
 

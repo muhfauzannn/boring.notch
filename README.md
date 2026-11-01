@@ -105,6 +105,10 @@ brew install --cask TheBoredTeam/boring-notch/boring-notch
 - Use the controls to manage your music like a rockstar.
 - Click the star in your menu bar to customize your notch to your heart's content.
 
+### Idle cat eyes
+
+When the notch is idle, a pair of mint-green cat eyes rests beside the camera housing, with gentle glances, blinks, an occasional double blink and one slower sleepy blink. Toggle **Settings → Appearance → Show cat eyes while idle**, where a small preview is also available. Music, Focus and notifications take priority. The animation stops when hidden or the screen sleeps, and Reduce Motion shows a still pair of eyes.
+
 ### SCELE tasks
 
 Open **Settings → SCELE** and sign in with your `scele.cs.ui.ac.id` account. The **Tasks** tab shows assignment and quiz deadlines, countdowns in Jakarta time (WIB), and submission/attempt status. Select the courses you want to follow in Settings; right-click a task and choose **Hide from notch** to hide another class's deadline.
